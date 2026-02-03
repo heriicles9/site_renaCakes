@@ -182,7 +182,60 @@ async def create_order(order: OrderCreate):
     doc = order_obj.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
     await db.orders.insert_one(doc)
+    
+    # Enviar para WhatsApp
+    try:
+        await send_order_to_whatsapp(order_obj)
+    except Exception as e:
+        logger.error(f"Erro ao enviar para WhatsApp: {e}")
+    
     return order_obj
+
+async def send_order_to_whatsapp(order: Order):
+    """Envia detalhes do pedido para WhatsApp via link"""
+    phone = "5575981777873"  # Número da loja (75) 98177-7873
+    
+    # Montar mensagem
+    msg = f"🎂 *NOVO PEDIDO - Renaildes Cakes*\\n\\n"
+    msg += f"👤 *Cliente:* {order.customer_name}\\n"
+    msg += f"📱 *Telefone:* {order.customer_phone}\\n"
+    msg += f"📍 *Endereço:* {order.customer_address}\\n\\n"
+    
+    msg += f"🛒 *Itens do Pedido:*\\n"
+    for item in order.items:
+        msg += f"• {item['quantity']}x {item['name']} - R$ {item['price']:.2f}\\n"
+        
+        if item.get('customization'):
+            custom = item['customization']
+            msg += f"  └ 🎂 Massa: {custom.get('massa', 'N/A')}\\n"
+            msg += f"  └ 🍰 Recheio: {custom.get('recheio', 'N/A')}\\n"
+            msg += f"  └ ✨ Cobertura: {custom.get('cobertura', 'N/A')}\\n"
+            if custom.get('observacoes'):
+                msg += f"  └ 📝 Obs: {custom['observacoes']}\\n"
+        msg += "\\n"
+    
+    msg += f"💰 *Subtotal:* R$ {order.subtotal:.2f}\\n"
+    msg += f"🚚 *Taxa de Entrega:* R$ {order.delivery_fee:.2f}\\n"
+    msg += f"💵 *TOTAL:* R$ {order.total:.2f}\\n\\n"
+    
+    msg += f"💳 *Pagamento:* {order.payment_method.upper()}\\n"
+    if order.payment_details:
+        if order.payment_details.get('change_for'):
+            msg += f"  └ Troco para: {order.payment_details['change_for']}\\n"
+    
+    msg += f"\\n⏰ Pedido realizado em: {order.created_at.strftime('%d/%m/%Y às %H:%M')}\\n"
+    msg += f"\\n🔗 Acesse o painel admin para gerenciar: https://seu-dominio.com/admin"
+    
+    # URL encode da mensagem
+    import urllib.parse
+    encoded_msg = urllib.parse.quote(msg)
+    whatsapp_url = f"https://wa.me/{phone}?text={encoded_msg}"
+    
+    logger.info(f"WhatsApp link gerado para pedido {order.id}: {whatsapp_url}")
+    logger.info(f"Mensagem: {msg}")
+    
+    # Nota: O link será logado. Em produção, você pode usar uma API como Twilio WhatsApp API
+    # para enviar automaticamente, ou integrar com WhatsApp Business API
 
 @api_router.patch("/orders/{order_id}/status")
 async def update_order_status(order_id: str, status: str, token: dict = Depends(verify_token)):
