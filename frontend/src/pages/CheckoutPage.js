@@ -131,13 +131,6 @@ const CheckoutPage = () => {
     
     return msg;
   };
-      clearCart();
-      navigate('/');
-    } catch (error) {
-      console.error('Erro ao criar pedido:', error);
-      toast.error('Erro ao processar pedido. Tente novamente.');
-    }
-  };
 
   if (cart.length === 0) {
     return (
