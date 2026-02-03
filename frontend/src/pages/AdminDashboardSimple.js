@@ -20,8 +20,7 @@ const AdminDashboard = () => {
       return;
     }
     loadData();
-    // eslint-disable-next-line
-  }, []);
+  }, [navigate]);
 
   const loadData = async () => {
     try {
@@ -45,14 +44,14 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className=\"min-h-screen bg-brand-cream\">
-      <nav className=\"bg-brand-brown text-white shadow-lg\">
-        <div className=\"max-w-7xl mx-auto px-6 py-4\">
-          <div className=\"flex justify-between items-center\">
-            <h1 className=\"font-heading text-2xl font-bold\">Painel Admin</h1>
+    <div className="min-h-screen bg-brand-cream">
+      <nav className="bg-brand-brown text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <h1 className="font-heading text-2xl font-bold">Painel Admin</h1>
             <button
               onClick={handleLogout}
-              className=\"flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full\"
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full"
             >
               <LogOut size={18} />
               Sair
@@ -61,8 +60,8 @@ const AdminDashboard = () => {
         </div>
       </nav>
 
-      <div className=\"max-w-7xl mx-auto px-6 py-8\">
-        <div className=\"flex gap-4 mb-8\">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex gap-4 mb-8">
           <button
             onClick={() => setActiveTab('products')}
             className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold ${
@@ -94,14 +93,14 @@ const AdminDashboard = () => {
 
         {activeTab === 'products' && (
           <div>
-            <h2 className=\"font-heading text-3xl font-bold text-brand-brown mb-6\">
+            <h2 className="font-heading text-3xl font-bold text-brand-brown mb-6">
               Produtos ({products.length})
             </h2>
-            <div className=\"grid grid-cols-1 md:grid-cols-3 gap-6\">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {products.map((product) => (
-                <div key={product.id} className=\"bg-white rounded-2xl p-4 shadow-md\">
-                  <h3 className=\"font-bold text-brand-brown\">{product.name}</h3>
-                  <p className=\"text-brand-rose font-bold\">R$ {product.price.toFixed(2)}</p>
+                <div key={product.id} className="bg-white rounded-2xl p-4 shadow-md">
+                  <h3 className="font-bold text-brand-brown">{product.name}</h3>
+                  <p className="text-brand-rose font-bold">R$ {product.price.toFixed(2)}</p>
                 </div>
               ))}
             </div>
@@ -110,12 +109,12 @@ const AdminDashboard = () => {
 
         {activeTab === 'orders' && (
           <div>
-            <h2 className=\"font-heading text-3xl font-bold text-brand-brown mb-6\">
+            <h2 className="font-heading text-3xl font-bold text-brand-brown mb-6">
               Pedidos ({orders.length})
             </h2>
             {orders.map((order) => (
-              <div key={order.id} className=\"bg-white rounded-2xl p-6 mb-4 shadow-md\">
-                <h3 className=\"font-bold text-brand-brown\">{order.customer_name}</h3>
+              <div key={order.id} className="bg-white rounded-2xl p-6 mb-4 shadow-md">
+                <h3 className="font-bold text-brand-brown">{order.customer_name}</h3>
                 <p>Total: R$ {order.total.toFixed(2)}</p>
                 <p>Status: {order.status}</p>
               </div>
@@ -125,10 +124,10 @@ const AdminDashboard = () => {
 
         {activeTab === 'settings' && (
           <div>
-            <h2 className=\"font-heading text-3xl font-bold text-brand-brown mb-6\">
-              Configura\u00e7\u00f5es
+            <h2 className="font-heading text-3xl font-bold text-brand-brown mb-6">
+              Configurações
             </h2>
-            <p className=\"text-brand-brown\">Painel de configura\u00e7\u00f5es em breve...</p>
+            <p className="text-brand-brown">Painel de configurações em breve...</p>
           </div>
         )}
       </div>
