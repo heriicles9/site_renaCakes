@@ -168,22 +168,22 @@ const AdminDashboard = () => {
 
         <div className="space-y-6">
           {getFilteredOrders().length > 0 && getFilteredOrders()[0] && (
-            <OrderCard order={getFilteredOrders()[0]} onStatusChange={handleStatusChange} />
+            <OrderCard order={getFilteredOrders()[0]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
           )}
           {getFilteredOrders().length > 1 && getFilteredOrders()[1] && (
-            <OrderCard order={getFilteredOrders()[1]} onStatusChange={handleStatusChange} />
+            <OrderCard order={getFilteredOrders()[1]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
           )}
           {getFilteredOrders().length > 2 && getFilteredOrders()[2] && (
-            <OrderCard order={getFilteredOrders()[2]} onStatusChange={handleStatusChange} />
+            <OrderCard order={getFilteredOrders()[2]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
           )}
           {getFilteredOrders().length > 3 && getFilteredOrders()[3] && (
-            <OrderCard order={getFilteredOrders()[3]} onStatusChange={handleStatusChange} />
+            <OrderCard order={getFilteredOrders()[3]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
           )}
           {getFilteredOrders().length > 4 && getFilteredOrders()[4] && (
-            <OrderCard order={getFilteredOrders()[4]} onStatusChange={handleStatusChange} />
+            <OrderCard order={getFilteredOrders()[4]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
           )}
           {getFilteredOrders().length > 5 && getFilteredOrders().slice(5).map(order => (
-            <OrderCard key={order.id} order={order} onStatusChange={handleStatusChange} />
+            <OrderCard key={order.id} order={order} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
           ))}
         </div>
       </div>
