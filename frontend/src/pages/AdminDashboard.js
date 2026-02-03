@@ -191,7 +191,7 @@ const AdminDashboard = () => {
   );
 };
 
-const OrderCard = ({ order, onStatusChange }) => {
+const OrderCard = ({ order, onStatusChange, onDelete }) => {
   const items = order.items || [];
   
   const getStatusColor = (status) => {
@@ -208,14 +208,27 @@ const OrderCard = ({ order, onStatusChange }) => {
       order.status === 'Feito' ? 'border-green-300' : 'border-brand-pink/20'
     }`}>
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="font-heading text-xl font-bold text-brand-brown">
-            {order.customer_name}
-          </h3>
-          <p className="text-sm text-brand-brown/70">{order.customer_phone}</p>
-          <p className="text-sm text-brand-brown/70">{order.customer_address}</p>
+        <div className="flex-1">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-heading text-xl font-bold text-brand-brown">
+                {order.customer_name}
+              </h3>
+              <p className="text-sm text-brand-brown/70">{order.customer_phone}</p>
+              <p className="text-sm text-brand-brown/70">{order.customer_address}</p>
+            </div>
+            <button
+              onClick={() => onDelete(order.id, order.customer_name)}
+              className="ml-4 text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all"
+              title="Deletar pedido"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="text-right">
+        <div className="text-right ml-4">
           <p className="font-bold text-2xl text-brand-rose">
             R$ {order.total ? order.total.toFixed(2) : '0.00'}
           </p>
