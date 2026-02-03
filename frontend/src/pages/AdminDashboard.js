@@ -170,11 +170,22 @@ const AdminDashboard = () => {
   );
 };
 
-const OrderCard = ({ order }) => {
+const OrderCard = ({ order, onStatusChange }) => {
   const items = order.items || [];
   
+  const getStatusColor = (status) => {
+    if (status === 'Pendente') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    if (status === 'Em preparo') return 'bg-blue-100 text-blue-800 border-blue-300';
+    if (status === 'Feito') return 'bg-green-100 text-green-800 border-green-300';
+    return 'bg-gray-100 text-gray-800 border-gray-300';
+  };
+  
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-md border border-brand-pink/20">
+    <div className={`bg-white rounded-2xl p-6 shadow-md border-2 ${
+      order.status === 'Pendente' ? 'border-yellow-300' :
+      order.status === 'Em preparo' ? 'border-blue-300' :
+      order.status === 'Feito' ? 'border-green-300' : 'border-brand-pink/20'
+    }`}>
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="font-heading text-xl font-bold text-brand-brown">
@@ -204,13 +215,34 @@ const OrderCard = ({ order }) => {
         ))}
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-brand-pink/20">
-        <p className="text-sm text-brand-brown/70">
-          <strong>Pagamento:</strong> {order.payment_method || 'N/A'}
-        </p>
-        <span className="px-4 py-2 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800">
-          {order.status || 'Pendente'}
-        </span>
+      <div className="flex items-center justify-between pt-4 border-t border-brand-pink/20 gap-4">
+        <div className="flex-1">
+          <p className="text-sm text-brand-brown/70 mb-2">
+            <strong>💳 Pagamento:</strong> {order.payment_method || 'N/A'}
+          </p>
+          <div>
+            <label className="text-sm font-semibold text-brand-brown block mb-2">
+              Mudar Status:
+            </label>
+            <select
+              value={order.status || 'Pendente'}
+              onChange={(e) => onStatusChange(order.id, e.target.value)}
+              className={`w-full px-4 py-2 rounded-full text-sm font-semibold border-2 cursor-pointer transition-all ${getStatusColor(order.status)}`}
+            >
+              <option value="Pendente">🟡 Pendente</option>
+              <option value="Em preparo">🔵 Em Preparo</option>
+              <option value="Feito">🟢 Feito</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <span className={`px-6 py-3 rounded-full text-sm font-bold border-2 ${getStatusColor(order.status)}`}>
+            {order.status === 'Pendente' && '🟡 '}
+            {order.status === 'Em preparo' && '🔵 '}
+            {order.status === 'Feito' && '🟢 '}
+            {order.status || 'Pendente'}
+          </span>
+        </div>
       </div>
     </div>
   );
