@@ -77,8 +77,60 @@ const CheckoutPage = () => {
     };
 
     try {
-      await axios.post(`${API}/orders`, orderData);
+      const response = await axios.post(`${API}/orders`, orderData);
       toast.success('Pedido realizado com sucesso!');
+      
+      // Gerar mensagem WhatsApp
+      const whatsappMsg = generateWhatsAppMessage(response.data);
+      const whatsappUrl = `https://wa.me/5575981777873?text=${encodeURIComponent(whatsappMsg)}`;
+      
+      // Abrir WhatsApp em nova aba
+      window.open(whatsappUrl, '_blank');
+      
+      clearCart();
+      navigate('/');
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error);
+      toast.error('Erro ao processar pedido. Tente novamente.');
+    }
+  };
+
+  const generateWhatsAppMessage = (order) => {
+    let msg = `🎂 *Olá! Gostaria de fazer um pedido:*\n\n`;
+    msg += `👤 *Nome:* ${formData.customer_name}\n`;
+    msg += `📱 *Telefone:* ${formData.customer_phone}\n`;
+    msg += `📍 *Endereço:* ${formData.customer_address}\n\n`;
+    
+    msg += `🛒 *Itens:*\n`;
+    cart.forEach((item) => {
+      const price = item.finalPrice || item.price;
+      msg += `• ${item.quantity}x ${item.name} - R$ ${price.toFixed(2)}\n`;
+      
+      if (item.customization) {
+        msg += `  └ 🎂 Massa: ${item.customization.massa}\n`;
+        msg += `  └ 🍰 Recheio: ${item.customization.recheio}\n`;
+        msg += `  └ ✨ Cobertura: ${item.customization.cobertura}\n`;
+        if (item.customization.observacoes) {
+          msg += `  └ 📝 ${item.customization.observacoes}\n`;
+        }
+      }
+      msg += `\n`;
+    });
+    
+    msg += `💰 *Subtotal:* R$ ${calculateTotal().toFixed(2)}\n`;
+    msg += `🚚 *Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
+    msg += `💵 *TOTAL:* R$ ${(calculateTotal() + deliveryFee).toFixed(2)}\n\n`;
+    
+    msg += `💳 *Forma de Pagamento:* `;
+    if (paymentMethod === 'pix') msg += 'PIX';
+    else if (paymentMethod === 'cartao') msg += 'Cartão (maquininha na entrega)';
+    else if (paymentMethod === 'dinheiro') {
+      msg += 'Dinheiro';
+      if (changeFor) msg += ` - Troco para: ${changeFor}`;
+    }
+    
+    return msg;
+  };
       clearCart();
       navigate('/');
     } catch (error) {
