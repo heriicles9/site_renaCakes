@@ -11,14 +11,15 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
-
-  useEffect(() => {
-    const savedCart = localStorage.getItem('renaildes_cart');
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
+  const [cart, setCart] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('renaildes_cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (error) {
+      console.error('Error loading cart from localStorage:', error);
+      return [];
     }
-  }, []);
+  });
 
   useEffect(() => {
     localStorage.setItem('renaildes_cart', JSON.stringify(cart));
