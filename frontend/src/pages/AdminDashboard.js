@@ -54,6 +54,27 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteOrder = async (orderId, customerName) => {
+    if (!window.confirm(`Tem certeza que deseja DELETAR o pedido de ${customerName}?\n\nEsta ação NÃO pode ser desfeita!`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('admin_token');
+      await axios.delete(
+        `${API}/orders/${orderId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      toast.success('Pedido deletado com sucesso!');
+      loadOrders();
+    } catch (error) {
+      console.error('Erro ao deletar pedido:', error);
+      toast.error('Erro ao deletar pedido');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
     toast.success('Logout realizado!');
