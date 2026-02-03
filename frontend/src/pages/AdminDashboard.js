@@ -46,7 +46,7 @@ const AdminDashboard = () => {
     fetchProducts();
     fetchOrders();
     fetchSettings();
-  }, []);
+  }, [navigate]);
 
   const getAuthHeader = () => {
     return {
