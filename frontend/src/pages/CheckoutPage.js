@@ -138,9 +138,11 @@ const CheckoutPage = () => {
                 Seus Produtos
               </h2>
               <div className="space-y-4">
-                {cart.map((item, index) => (
+                {cart.map((item, index) => {
+                  const itemId = item.cartItemId || item.id;
+                  return (
                   <div
-                    key={`${item.id}-${index}`}
+                    key={itemId}
                     className="pb-4 border-b border-brand-pink/20 last:border-0"
                     data-testid={`cart-item-${index}`}
                   >
@@ -171,7 +173,7 @@ const CheckoutPage = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(itemId, item.quantity - 1)}
                           className="w-8 h-8 bg-brand-pink rounded-full font-bold hover:bg-brand-pink/80"
                           data-testid={`decrease-quantity-${index}`}
                         >
@@ -179,7 +181,7 @@ const CheckoutPage = () => {
                         </button>
                         <span className="w-12 text-center font-bold" data-testid={`item-quantity-${index}`}>{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(itemId, item.quantity + 1)}
                           className="w-8 h-8 bg-brand-pink rounded-full font-bold hover:bg-brand-pink/80"
                           data-testid={`increase-quantity-${index}`}
                         >
@@ -187,7 +189,7 @@ const CheckoutPage = () => {
                         </button>
                       </div>
                       <button
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() => removeFromCart(itemId)}
                         className="text-red-500 hover:text-red-700 transition-colors"
                         data-testid={`remove-item-${index}`}
                       >
@@ -195,7 +197,7 @@ const CheckoutPage = () => {
                       </button>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </motion.div>
 
