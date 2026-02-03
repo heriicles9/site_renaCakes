@@ -1,0 +1,131 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "Renaildes Cakes",
+      "tone": "Elegant, Appetizing, Handcrafted, Warm",
+      "archetype": "The Nurturing Artisan",
+      "theme_mode": "light"
+    },
+    "typography": {
+      "font_family": {
+        "heading": "Playfair Display, serif",
+        "body": "Manrope, sans-serif",
+        "accent": "Dancing Script, cursive"
+      },
+      "imports": [
+        "@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Manrope:wght@200..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');"
+      ],
+      "scale": {
+        "h1": "text-4xl md:text-6xl font-bold tracking-tight",
+        "h2": "text-3xl md:text-4xl font-semibold",
+        "h3": "text-2xl font-medium",
+        "body": "text-base md:text-lg leading-relaxed"
+      }
+    },
+    "colors": {
+      "palette": {
+        "primary": "#5D4037",
+        "primary_foreground": "#FFFFFF",
+        "secondary": "#F8E7E7",
+        "secondary_foreground": "#5D4037",
+        "accent": "#D88C9A",
+        "accent_foreground": "#FFFFFF",
+        "background": "#FFFCF9",
+        "surface": "#FFFFFF",
+        "muted": "#F5F5F4",
+        "border": "#E7E5E4"
+      },
+      "tailwind_config": {
+        "colors": {
+          "brand": {
+            "brown": "#5D4037",
+            "pink": "#F8E7E7",
+            "rose": "#D88C9A",
+            "cream": "#FFFCF9"
+          }
+        }
+      },
+      "usage": {
+        "text_main": "brand-brown",
+        "text_muted": "#8D7F7D",
+        "bg_page": "brand-cream",
+        "bg_card": "white",
+        "button_primary": "brand-brown",
+        "button_secondary": "brand-pink"
+      }
+    },
+    "visual_enhancers": {
+      "radius": "rounded-xl",
+      "shadows": {
+        "card": "shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+        "floating": "shadow-[0_20px_50px_rgb(93,64,55,0.1)]"
+      },
+      "glassmorphism": "backdrop-blur-md bg-white/70 border border-white/20",
+      "textures": "Use subtle grain or paper texture overlays on the cream background to add warmth."
+    }
+  },
+  "components": {
+    "buttons": {
+      "style": "pill-shaped (rounded-full)",
+      "animation": "transform transition-all active:scale-95 hover:shadow-lg",
+      "variants": {
+        "primary": "bg-[#5D4037] text-white hover:bg-[#4A322C]",
+        "secondary": "bg-[#F8E7E7] text-[#5D4037] hover:bg-[#F0D5D5]",
+        "outline": "border-2 border-[#5D4037] text-[#5D4037] hover:bg-[#5D4037] hover:text-white"
+      }
+    },
+    "cards": {
+      "product_card": {
+        "structure": "Image (aspect-square, object-cover) + Content Padding (p-4)",
+        "style": "bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border-none",
+        "typography": "Title (Playfair, bold), Price (Manrope, font-bold, text-brand-rose)"
+      }
+    },
+    "inputs": {
+      "style": "bg-white border-brand-pink/50 focus:border-brand-brown focus:ring-1 focus:ring-brand-brown rounded-lg h-12"
+    },
+    "navigation": {
+      "mobile": "Bottom sticky bar or Hamburger menu with glassmorphism",
+      "desktop": "Centered logo, split links, transparent to solid on scroll"
+    }
+  },
+  "layout_strategies": {
+    "mobile_first": true,
+    "grid_system": {
+      "hero": "Full screen height (min-h-[80vh]) with text overlay or split screen on desktop",
+      "gallery": "Masonry grid or Bento grid (grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6)",
+      "features": "Horizontal scroll (snap-x) on mobile, Grid on desktop"
+    },
+    "spacing": {
+      "section_padding": "py-16 md:py-24",
+      "container_padding": "px-6 md:px-12"
+    }
+  },
+  "assets": {
+    "images": {
+      "hero_main": "https://images.unsplash.com/photo-1737189409843-c86c2d4770fd?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "category_chocolate": "https://images.unsplash.com/photo-1621868402792-a5c9fa6866a3?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "category_wedding": "https://images.unsplash.com/photo-1583067784891-36831dbd4cb4?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "about_shop": "https://images.unsplash.com/photo-1721412742313-fbcc3e48f770?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "client_reference": "https://customer-assets.emergentagent.com/job_7700306c-731d-4a87-a88a-750fe92720c3/artifacts/8gsxelum_IMG-20260203-WA0061.jpg"
+    },
+    "icons": "Use Lucide-React (Cake, ShoppingBag, Menu, X, Star, Heart, ChevronRight)"
+  },
+  "motion": {
+    "library": "framer-motion",
+    "guidelines": {
+      "page_transition": "initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}",
+      "hover_lift": "whileHover={{ y: -5 }}",
+      "stagger": "staggerChildren: 0.1"
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. SETUP: Install 'lucide-react' and 'framer-motion' immediately.",
+    "2. THEME: Force LIGHT MODE. Do not implement dark mode toggle. The brand is strictly pastel/light.",
+    "3. FONTS: Add the Google Fonts import to index.css immediately.",
+    "4. IMAGES: Use the 'client_reference' image as the Logo or Hero Banner if it contains the brand name. Otherwise, use it in the 'About' section.",
+    "5. COMPONENTS: Customize Shadcn components. Remove default 'slate' borders and replace with 'brand-pink/30'.",
+    "6. MOBILE: Ensure the 'Add to Cart' button is sticky at the bottom on mobile product pages.",
+    "7. ADMIN: Keep the admin dashboard simple but clean. Use a sidebar layout."
+  ]
+}
