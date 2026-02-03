@@ -116,7 +116,39 @@ const AdminDashboard = () => {
             {orders.length === 0 ? (
               <p className="text-brand-brown/60 text-center py-10">Nenhum pedido ainda.</p>
             ) : (
-              orders.map((order) => <OrderCard key={order.id} order={order} />)
+              <div>
+                {orders.map((order) => (
+                  <div key={order.id} className="bg-white rounded-2xl p-6 mb-4 shadow-md">
+                    <div className="flex justify-between mb-4">
+                      <div>
+                        <h3 className="font-bold text-brand-brown">{order.customer_name}</h3>
+                        <p className="text-sm">{order.customer_phone}</p>
+                        <p className="text-sm">{order.customer_address}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-brand-rose text-xl">R$ {order.total.toFixed(2)}</p>
+                        <p className="text-xs">{new Date(order.created_at).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                    </div>
+                    <div className="bg-brand-pink/10 p-3 rounded">
+                      <p className="font-semibold mb-2">Itens:</p>
+                      {order.items && order.items.length > 0 && order.items.map((item, idx) => (
+                        <div key={idx} className="mb-2">
+                          <p>{item.quantity}x {item.name} - R$ {item.price.toFixed(2)}</p>
+                          {item.customization && (
+                            <div className="text-sm ml-4 mt-1">
+                              <p>Massa: {item.customization.massa}</p>
+                              <p>Recheio: {item.customization.recheio}</p>
+                              {item.customization.observacoes && <p>Obs: {item.customization.observacoes}</p>}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-sm">Pagamento: {order.payment_method} | Status: {order.status}</p>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
