@@ -97,34 +97,72 @@ const AdminDashboard = () => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <h2 className="font-heading text-3xl font-bold text-brand-brown mb-6">
-          Total de Pedidos: {orders.length}
-        </h2>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="font-heading text-3xl font-bold text-brand-brown">
+            Gerenciar Pedidos
+          </h2>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-full font-semibold transition-all ${
+                filter === 'all' ? 'bg-brand-brown text-white' : 'bg-white text-brand-brown border border-brand-pink'
+              }`}
+            >
+              Todos ({orders.length})
+            </button>
+            <button
+              onClick={() => setFilter('Pendente')}
+              className={`px-4 py-2 rounded-full font-semibold transition-all ${
+                filter === 'Pendente' ? 'bg-yellow-500 text-white' : 'bg-white text-yellow-700 border border-yellow-300'
+              }`}
+            >
+              Pendente ({pendingOrders.length})
+            </button>
+            <button
+              onClick={() => setFilter('Em preparo')}
+              className={`px-4 py-2 rounded-full font-semibold transition-all ${
+                filter === 'Em preparo' ? 'bg-blue-500 text-white' : 'bg-white text-blue-700 border border-blue-300'
+              }`}
+            >
+              Em Preparo ({preparingOrders.length})
+            </button>
+            <button
+              onClick={() => setFilter('Feito')}
+              className={`px-4 py-2 rounded-full font-semibold transition-all ${
+                filter === 'Feito' ? 'bg-green-500 text-white' : 'bg-white text-green-700 border border-green-300'
+              }`}
+            >
+              Feito ({completedOrders.length})
+            </button>
+          </div>
+        </div>
 
-        {orders.length === 0 && (
+        {getFilteredOrders().length === 0 && (
           <div className="text-center py-20">
-            <p className="text-xl text-brand-brown/60">Nenhum pedido recebido ainda.</p>
+            <p className="text-xl text-brand-brown/60">
+              {filter === 'all' ? 'Nenhum pedido recebido ainda.' : `Nenhum pedido ${filter}.`}
+            </p>
           </div>
         )}
 
         <div className="space-y-6">
-          {orders.length > 0 && orders[0] && (
-            <OrderCard order={orders[0]} />
+          {getFilteredOrders().length > 0 && getFilteredOrders()[0] && (
+            <OrderCard order={getFilteredOrders()[0]} onStatusChange={handleStatusChange} />
           )}
-          {orders.length > 1 && orders[1] && (
-            <OrderCard order={orders[1]} />
+          {getFilteredOrders().length > 1 && getFilteredOrders()[1] && (
+            <OrderCard order={getFilteredOrders()[1]} onStatusChange={handleStatusChange} />
           )}
-          {orders.length > 2 && orders[2] && (
-            <OrderCard order={orders[2]} />
+          {getFilteredOrders().length > 2 && getFilteredOrders()[2] && (
+            <OrderCard order={getFilteredOrders()[2]} onStatusChange={handleStatusChange} />
           )}
-          {orders.length > 3 && orders[3] && (
-            <OrderCard order={orders[3]} />
+          {getFilteredOrders().length > 3 && getFilteredOrders()[3] && (
+            <OrderCard order={getFilteredOrders()[3]} onStatusChange={handleStatusChange} />
           )}
-          {orders.length > 4 && orders[4] && (
-            <OrderCard order={orders[4]} />
+          {getFilteredOrders().length > 4 && getFilteredOrders()[4] && (
+            <OrderCard order={getFilteredOrders()[4]} onStatusChange={handleStatusChange} />
           )}
-          {orders.length > 5 && orders.slice(5).map(order => (
-            <OrderCard key={order.id} order={order} />
+          {getFilteredOrders().length > 5 && getFilteredOrders().slice(5).map(order => (
+            <OrderCard key={order.id} order={order} onStatusChange={handleStatusChange} />
           ))}
         </div>
       </div>
