@@ -5,6 +5,7 @@ import { ShoppingBag, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import CakeCustomizer from '../components/CakeCustomizer';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
 
@@ -16,6 +17,7 @@ const ProductDetailPage = () => {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [customization, setCustomization] = useState(null);
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -33,11 +35,39 @@ const ProductDetailPage = () => {
     }
   };
 
+  const isCakeProduct = product && (product.category === 'Bolos Redondos' || product.category === 'Bolos Retangulares');
+
   const handleAddToCart = () => {
-    if (product) {
-      addToCart(product, quantity);
+    if (!product) return;
+
+    if (isCakeProduct && (!customization || !customization.isComplete)) {
+      toast.error('Por favor, personalize seu bolo antes de adicionar ao carrinho!');
+      return;
+    }
+
+    const productWithCustomization = {
+      ...product,
+      customization: customization || null,
+      finalPrice: product.price + (customization?.precoAdicional || 0)
+    };
+
+    addToCart(productWithCustomization, quantity);
+    
+    if (customization) {
+      toast.success(
+        `${quantity}x ${product.name} personalizado adicionado ao carrinho!\n` +
+        `Massa: ${customization.massa}\n` +
+        `Recheio: ${customization.recheio}`
+      );
+    } else {
       toast.success(`${quantity}x ${product.name} adicionado ao carrinho!`);
     }
+  };
+
+  const getTotalPrice = () => {
+    const basePrice = product.price;
+    const customPrice = customization?.precoAdicional || 0;
+    return (basePrice + customPrice) * quantity;
   };
 
   if (!product) {
@@ -114,10 +144,18 @@ const ProductDetailPage = () => {
             </p>
 
             <div className="bg-brand-pink/30 p-6 rounded-2xl mb-8">
-              <p className="text-sm text-brand-brown/70 mb-2">Preço</p>
+              <p className="text-sm text-brand-brown/70 mb-2">Preço Base</p>
               <p className="font-bold text-4xl text-brand-rose" data-testid="product-price">
                 R$ {product.price.toFixed(2)}
               </p>
+              {customization && customization.precoAdicional > 0 && (
+                <div className="mt-3 pt-3 border-t border-brand-brown/20">
+                  <p className="text-sm text-brand-brown/70">Personalização</p>
+                  <p className="font-bold text-2xl text-brand-brown">
+                    +R$ {customization.precoAdicional.toFixed(2)}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="mb-8">
@@ -147,14 +185,26 @@ const ProductDetailPage = () => {
 
             <button
               onClick={handleAddToCart}
-              className="w-full bg-brand-brown text-white py-4 rounded-full text-lg font-semibold hover:bg-brand-brown/90 shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-3"
+              disabled={isCakeProduct && (!customization || !customization.isComplete)}
+              className="w-full bg-brand-brown text-white py-4 rounded-full text-lg font-semibold hover:bg-brand-brown/90 shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="add-to-cart-button"
             >
               <ShoppingBag size={24} />
-              Adicionar ao Carrinho - R$ {(product.price * quantity).toFixed(2)}
+              {isCakeProduct && (!customization || !customization.isComplete)
+                ? 'Personalize seu bolo primeiro'
+                : `Adicionar ao Carrinho - R$ ${getTotalPrice().toFixed(2)}`}
             </button>
           </div>
         </motion.div>
+
+        {isCakeProduct && (
+          <div className="mt-12">
+            <CakeCustomizer
+              product={product}
+              onCustomizationChange={setCustomization}
+            />
+          </div>
+        )}
       </div>
 
       <Footer />

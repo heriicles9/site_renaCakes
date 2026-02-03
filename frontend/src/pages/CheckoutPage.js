@@ -39,6 +39,13 @@ const CheckoutPage = () => {
     }
   };
 
+  const calculateTotal = () => {
+    return cart.reduce((sum, item) => {
+      const itemPrice = item.finalPrice || item.price;
+      return sum + itemPrice * item.quantity;
+    }, 0);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -57,12 +64,13 @@ const CheckoutPage = () => {
       items: cart.map((item) => ({
         id: item.id,
         name: item.name,
-        price: item.price,
+        price: item.finalPrice || item.price,
         quantity: item.quantity,
+        customization: item.customization || null
       })),
-      subtotal: getTotal(),
+      subtotal: calculateTotal(),
       delivery_fee: deliveryFee,
-      total: getTotal() + deliveryFee,
+      total: calculateTotal() + deliveryFee,
       payment_method: paymentMethod,
       payment_details:
         paymentMethod === 'dinheiro' ? { change_for: changeFor } : null,
@@ -132,45 +140,60 @@ const CheckoutPage = () => {
               <div className="space-y-4">
                 {cart.map((item, index) => (
                   <div
-                    key={item.id}
-                    className="flex items-center gap-4 pb-4 border-b border-brand-pink/20 last:border-0"
+                    key={`${item.id}-${index}`}
+                    className="pb-4 border-b border-brand-pink/20 last:border-0"
                     data-testid={`cart-item-${index}`}
                   >
-                    <img
-                      src={item.image_url || 'https://images.unsplash.com/photo-1621868402792-a5c9fa6866a3?crop=entropy&cs=srgb&fm=jpg&q=85'}
-                      alt={item.name}
-                      className="w-20 h-20 object-cover rounded-lg"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-brand-brown">{item.name}</h3>
-                      <p className="text-brand-rose font-bold">
-                        R$ {item.price.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-start gap-4">
+                      <img
+                        src={item.image_url || 'https://images.unsplash.com/photo-1621868402792-a5c9fa6866a3?crop=entropy&cs=srgb&fm=jpg&q=85'}
+                        alt={item.name}
+                        className="w-20 h-20 object-cover rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-brand-brown">{item.name}</h3>
+                        {item.customization && (
+                          <div className="mt-2 text-sm text-brand-brown/70 bg-brand-pink/20 p-2 rounded">
+                            <p><strong>Massa:</strong> {item.customization.massa}</p>
+                            <p><strong>Recheio:</strong> {item.customization.recheio}</p>
+                            <p><strong>Cobertura:</strong> {item.customization.cobertura}</p>
+                            {item.customization.observacoes && (
+                              <p><strong>Obs:</strong> {item.customization.observacoes}</p>
+                            )}
+                          </div>
+                        )}
+                        <p className="text-brand-rose font-bold mt-2">
+                          R$ {(item.finalPrice || item.price).toFixed(2)}
+                          {item.customization?.precoAdicional > 0 && (
+                            <span className="text-xs text-brand-brown/60"> (personalizado)</span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="w-8 h-8 bg-brand-pink rounded-full font-bold hover:bg-brand-pink/80"
+                          data-testid={`decrease-quantity-${index}`}
+                        >
+                          -
+                        </button>
+                        <span className="w-12 text-center font-bold" data-testid={`item-quantity-${index}`}>{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="w-8 h-8 bg-brand-pink rounded-full font-bold hover:bg-brand-pink/80"
+                          data-testid={`increase-quantity-${index}`}
+                        >
+                          +
+                        </button>
+                      </div>
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 bg-brand-pink rounded-full font-bold hover:bg-brand-pink/80"
-                        data-testid={`decrease-quantity-${index}`}
+                        onClick={() => removeFromCart(item.id)}
+                        className="text-red-500 hover:text-red-700 transition-colors"
+                        data-testid={`remove-item-${index}`}
                       >
-                        -
-                      </button>
-                      <span className="w-12 text-center font-bold" data-testid={`item-quantity-${index}`}>{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 bg-brand-pink rounded-full font-bold hover:bg-brand-pink/80"
-                        data-testid={`increase-quantity-${index}`}
-                      >
-                        +
+                        <Trash2 size={20} />
                       </button>
                     </div>
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-500 hover:text-red-700 transition-colors"
-                      data-testid={`remove-item-${index}`}
-                    >
-                      <Trash2 size={20} />
-                    </button>
                   </div>
                 ))}
               </div>
@@ -339,7 +362,7 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-brand-brown">
                   <span>Subtotal</span>
                   <span className="font-semibold" data-testid="subtotal-display">
-                    R$ {getTotal().toFixed(2)}
+                    R$ {calculateTotal().toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-brand-brown">
@@ -351,7 +374,7 @@ const CheckoutPage = () => {
                 <div className="border-t border-brand-pink/20 pt-4 flex justify-between text-brand-brown">
                   <span className="text-xl font-bold">Total</span>
                   <span className="text-2xl font-bold text-brand-rose" data-testid="total-display">
-                    R$ {(getTotal() + deliveryFee).toFixed(2)}
+                    R$ {(calculateTotal() + deliveryFee).toFixed(2)}
                   </span>
                 </div>
               </div>
