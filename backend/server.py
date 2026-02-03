@@ -244,6 +244,13 @@ async def update_order_status(order_id: str, status: str, token: dict = Depends(
         raise HTTPException(status_code=404, detail="Pedido não encontrado")
     return {"message": "Status atualizado com sucesso"}
 
+@api_router.delete("/orders/{order_id}")
+async def delete_order(order_id: str, token: dict = Depends(verify_token)):
+    result = await db.orders.delete_one({"id": order_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    return {"message": "Pedido deletado com sucesso"}
+
 @api_router.get("/settings", response_model=Settings)
 async def get_settings():
     settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
