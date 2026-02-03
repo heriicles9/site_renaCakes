@@ -131,14 +131,25 @@ const CatalogPage = () => {
                   <span className="font-bold text-2xl text-brand-rose">
                     R$ {product.price.toFixed(2)}
                   </span>
-                  <button
-                    onClick={() => handleAddToCart(product)}
-                    className="bg-brand-brown text-white px-6 py-2.5 rounded-full hover:bg-brand-brown/90 transition-all transform active:scale-95 flex items-center gap-2"
-                    data-testid={`add-to-cart-${index}`}
-                  >
-                    <ShoppingBag size={18} />
-                    Adicionar
-                  </button>
+                  {product.category === 'Bolos Redondos' || product.category === 'Bolos Retangulares' ? (
+                    <Link
+                      to={`/produto/${product.id}`}
+                      className="bg-brand-brown text-white px-6 py-2.5 rounded-full hover:bg-brand-brown/90 transition-all transform active:scale-95 flex items-center gap-2"
+                      data-testid={`add-to-cart-${index}`}
+                    >
+                      <ShoppingBag size={18} />
+                      Personalizar
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => handleAddToCart(product)}
+                      className="bg-brand-brown text-white px-6 py-2.5 rounded-full hover:bg-brand-brown/90 transition-all transform active:scale-95 flex items-center gap-2"
+                      data-testid={`add-to-cart-${index}`}
+                    >
+                      <ShoppingBag size={18} />
+                      Adicionar
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
