@@ -11,6 +11,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -35,6 +36,24 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      await axios.patch(
+        `${API}/orders/${orderId}/status?status=${newStatus}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      toast.success('Status atualizado!');
+      loadOrders();
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      toast.error('Erro ao atualizar status');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
     toast.success('Logout realizado!');
@@ -48,6 +67,17 @@ const AdminDashboard = () => {
       </div>
     );
   }
+
+  const pendingOrders = orders.filter(o => o.status === 'Pendente');
+  const preparingOrders = orders.filter(o => o.status === 'Em preparo');
+  const completedOrders = orders.filter(o => o.status === 'Feito');
+
+  const getFilteredOrders = () => {
+    if (filter === 'Pendente') return pendingOrders;
+    if (filter === 'Em preparo') return preparingOrders;
+    if (filter === 'Feito') return completedOrders;
+    return orders;
+  };
 
   return (
     <div className="min-h-screen bg-brand-cream">
