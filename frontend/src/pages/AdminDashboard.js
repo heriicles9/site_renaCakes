@@ -1,315 +1,194 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import React from 'react';
 import axios from 'axios';
-import { toast } from 'sonner';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const AdminDashboard = () => {
-  const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+class AdminDashboard extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      orders: [],
+      filter: 'all',
+      loading: true
+    };
+  }
 
-  useEffect(() => {
+  componentDidMount() {
     const token = localStorage.getItem('admin_token');
     if (!token) {
-      navigate('/admin');
+      window.location.href = '/admin';
       return;
     }
-    loadOrders();
-  }, [navigate]);
+    this.loadOrders();
+  }
 
-  const loadOrders = async () => {
+  loadOrders = async () => {
     try {
       const token = localStorage.getItem('admin_token');
       const res = await axios.get(`${API}/orders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setOrders(res.data);
-      setLoading(false);
+      this.setState({ orders: res.data, loading: false });
     } catch (error) {
       console.error('Erro:', error);
-      setLoading(false);
+      this.setState({ loading: false });
     }
-  };
+  }
 
-  const handleStatusChange = async (orderId, newStatus) => {
+  handleStatusChange = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem('admin_token');
       await axios.patch(
         `${API}/orders/${orderId}/status?status=${newStatus}`,
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Status atualizado!');
-      loadOrders();
+      alert('Status atualizado!');
+      this.loadOrders();
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      toast.error('Erro ao atualizar status');
+      console.error('Erro:', error);
+      alert('Erro ao atualizar status');
     }
-  };
-
-  const handleDeleteOrder = async (orderId, customerName) => {
-    if (!window.confirm(`Tem certeza que deseja DELETAR o pedido de ${customerName}?\n\nEsta ação NÃO pode ser desfeita!`)) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('admin_token');
-      await axios.delete(
-        `${API}/orders/${orderId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      toast.success('Pedido deletado com sucesso!');
-      loadOrders();
-    } catch (error) {
-      console.error('Erro ao deletar pedido:', error);
-      toast.error('Erro ao deletar pedido');
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    toast.success('Logout realizado!');
-    navigate('/admin');
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl">Carregando...</p>
-      </div>
-    );
   }
 
-  const pendingOrders = orders.filter(o => o.status === 'Pendente');
-  const preparingOrders = orders.filter(o => o.status === 'Em preparo');
-  const completedOrders = orders.filter(o => o.status === 'Feito');
+  handleDelete = async (orderId, name) => {
+    if (!window.confirm(`Deletar pedido de ${name}?`)) return;
+    
+    try {
+      const token = localStorage.getItem('admin_token');
+      await axios.delete(`${API}/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Pedido deletado!');
+      this.loadOrders();
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao deletar');
+    }
+  }
 
-  const getFilteredOrders = () => {
-    if (filter === 'Pendente') return pendingOrders;
-    if (filter === 'Em preparo') return preparingOrders;
-    if (filter === 'Feito') return completedOrders;
-    return orders;
-  };
+  handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    window.location.href = '/admin';
+  }
 
-  return (
-    <div className="min-h-screen bg-brand-cream">
-      <nav className="bg-brand-brown text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="font-heading text-2xl font-bold">Painel Admin - Pedidos</h1>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full"
-            >
-              <LogOut size={18} />
-              Sair
-            </button>
-          </div>
-        </div>
-      </nav>
+  getFilteredOrders = () => {
+    const { orders, filter } = this.state;
+    if (filter === 'all') return orders;
+    return orders.filter(o => o.status === filter);
+  }
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="font-heading text-3xl font-bold text-brand-brown">
-            Gerenciar Pedidos
-          </h2>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-full font-semibold transition-all ${
-                filter === 'all' ? 'bg-brand-brown text-white' : 'bg-white text-brand-brown border border-brand-pink'
-              }`}
-            >
-              Todos ({orders.length})
-            </button>
-            <button
-              onClick={() => setFilter('Pendente')}
-              className={`px-4 py-2 rounded-full font-semibold transition-all ${
-                filter === 'Pendente' ? 'bg-yellow-500 text-white' : 'bg-white text-yellow-700 border border-yellow-300'
-              }`}
-            >
-              Pendente ({pendingOrders.length})
-            </button>
-            <button
-              onClick={() => setFilter('Em preparo')}
-              className={`px-4 py-2 rounded-full font-semibold transition-all ${
-                filter === 'Em preparo' ? 'bg-blue-500 text-white' : 'bg-white text-blue-700 border border-blue-300'
-              }`}
-            >
-              Em Preparo ({preparingOrders.length})
-            </button>
-            <button
-              onClick={() => setFilter('Feito')}
-              className={`px-4 py-2 rounded-full font-semibold transition-all ${
-                filter === 'Feito' ? 'bg-green-500 text-white' : 'bg-white text-green-700 border border-green-300'
-              }`}
-            >
-              Feito ({completedOrders.length})
-            </button>
-          </div>
-        </div>
+  render() {
+    const { orders, filter, loading } = this.state;
+    
+    if (loading) {
+      return React.createElement('div', { className: 'min-h-screen flex items-center justify-center' },
+        React.createElement('p', { className: 'text-xl' }, 'Carregando...')
+      );
+    }
 
-        {getFilteredOrders().length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-xl text-brand-brown/60">
-              {filter === 'all' ? 'Nenhum pedido recebido ainda.' : `Nenhum pedido ${filter}.`}
-            </p>
-          </div>
-        )}
+    const pendingCount = orders.filter(o => o.status === 'Pendente').length;
+    const preparingCount = orders.filter(o => o.status === 'Em preparo').length;
+    const doneCount = orders.filter(o => o.status === 'Feito').length;
+    const filteredOrders = this.getFilteredOrders();
 
-        <div className="space-y-6">
-          {getFilteredOrders().length > 0 && getFilteredOrders()[0] && (
-            <OrderCard order={getFilteredOrders()[0]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
-          )}
-          {getFilteredOrders().length > 1 && getFilteredOrders()[1] && (
-            <OrderCard order={getFilteredOrders()[1]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
-          )}
-          {getFilteredOrders().length > 2 && getFilteredOrders()[2] && (
-            <OrderCard order={getFilteredOrders()[2]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
-          )}
-          {getFilteredOrders().length > 3 && getFilteredOrders()[3] && (
-            <OrderCard order={getFilteredOrders()[3]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
-          )}
-          {getFilteredOrders().length > 4 && getFilteredOrders()[4] && (
-            <OrderCard order={getFilteredOrders()[4]} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
-          )}
-          {getFilteredOrders().length > 5 && getFilteredOrders().slice(5).map(order => (
-            <OrderCard key={order.id} order={order} onStatusChange={handleStatusChange} onDelete={handleDeleteOrder} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const OrderCard = ({ order, onStatusChange, onDelete }) => {
-  const items = order.items || [];
-  
-  const getStatusColor = (status) => {
-    if (status === 'Pendente') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-    if (status === 'Em preparo') return 'bg-blue-100 text-blue-800 border-blue-300';
-    if (status === 'Feito') return 'bg-green-100 text-green-800 border-green-300';
-    return 'bg-gray-100 text-gray-800 border-gray-300';
-  };
-  
-  return (
-    <div className={`bg-white rounded-2xl p-6 shadow-md border-2 ${
-      order.status === 'Pendente' ? 'border-yellow-300' :
-      order.status === 'Em preparo' ? 'border-blue-300' :
-      order.status === 'Feito' ? 'border-green-300' : 'border-brand-pink/20'
-    }`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="font-heading text-xl font-bold text-brand-brown">
-                {order.customer_name}
-              </h3>
-              <p className="text-sm text-brand-brown/70">{order.customer_phone}</p>
-              <p className="text-sm text-brand-brown/70">{order.customer_address}</p>
-            </div>
-            <button
-              onClick={() => onDelete(order.id, order.customer_name)}
-              className="ml-4 text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all"
-              title="Deletar pedido"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div className="text-right ml-4">
-          <p className="font-bold text-2xl text-brand-rose">
-            R$ {order.total ? order.total.toFixed(2) : '0.00'}
-          </p>
-          <p className="text-xs text-brand-brown/60">
-            {order.created_at ? new Date(order.created_at).toLocaleDateString('pt-BR') : ''}
-          </p>
-        </div>
-      </div>
-
-      <div className="bg-brand-pink/10 p-4 rounded-lg mb-4">
-        <p className="font-semibold text-brand-brown mb-3">Itens do Pedido:</p>
-        
-        {items.length > 0 && items[0] && <OrderItem item={items[0]} />}
-        {items.length > 1 && items[1] && <OrderItem item={items[1]} />}
-        {items.length > 2 && items[2] && <OrderItem item={items[2]} />}
-        {items.length > 3 && items.slice(3).map((item, i) => (
-          <OrderItem key={i} item={item} />
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between pt-4 border-t border-brand-pink/20 gap-4">
-        <div className="flex-1">
-          <p className="text-sm text-brand-brown/70 mb-2">
-            <strong>💳 Pagamento:</strong> {order.payment_method || 'N/A'}
-          </p>
-          <div>
-            <label className="text-sm font-semibold text-brand-brown block mb-2">
-              Mudar Status:
-            </label>
-            <select
-              value={order.status || 'Pendente'}
-              onChange={(e) => onStatusChange(order.id, e.target.value)}
-              className={`w-full px-4 py-2 rounded-full text-sm font-semibold border-2 cursor-pointer transition-all ${getStatusColor(order.status)}`}
-            >
-              <option value="Pendente">🟡 Pendente</option>
-              <option value="Em preparo">🔵 Em Preparo</option>
-              <option value="Feito">🟢 Feito</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <span className={`px-6 py-3 rounded-full text-sm font-bold border-2 ${getStatusColor(order.status)}`}>
-            {order.status === 'Pendente' && '🟡 '}
-            {order.status === 'Em preparo' && '🔵 '}
-            {order.status === 'Feito' && '🟢 '}
-            {order.status || 'Pendente'}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const OrderItem = ({ item }) => {
-  const custom = item.customization;
-  
-  return (
-    <div className="mb-3 pb-3 border-b border-brand-pink/30 last:border-0">
-      <div className="flex justify-between">
-        <p className="font-semibold text-brand-brown">
-          {item.quantity}x {item.name}
-        </p>
-        <p className="font-bold text-brand-rose">
-          R$ {item.price ? item.price.toFixed(2) : '0.00'}
-        </p>
-      </div>
-      
-      {custom && (
-        <div className="mt-2 text-sm text-brand-brown/80 ml-4 space-y-1">
-          {custom.massa && <p>🎂 Massa: {custom.massa}</p>}
-          {custom.recheio && <p>🍰 Recheio: {custom.recheio}</p>}
-          {custom.cobertura && <p>✨ Cobertura: {custom.cobertura}</p>}
-          {custom.observacoes && (
-            <p className="bg-yellow-50 border border-yellow-200 p-2 rounded mt-2">
-              📝 {custom.observacoes}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
+    return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
+      React.createElement('nav', { className: 'bg-pink-900 text-white p-4' },
+        React.createElement('div', { className: 'max-w-7xl mx-auto flex justify-between items-center' },
+          React.createElement('h1', { className: 'text-2xl font-bold' }, 'Admin - Pedidos'),
+          React.createElement('button', {
+            onClick: this.handleLogout,
+            className: 'bg-white/20 px-4 py-2 rounded hover:bg-white/30'
+          }, 'Sair')
+        )
+      ),
+      React.createElement('div', { className: 'max-w-7xl mx-auto p-6' },
+        React.createElement('div', { className: 'flex gap-3 mb-8' },
+          React.createElement('button', {
+            onClick: () => this.setState({ filter: 'all' }),
+            className: `px-4 py-2 rounded-full font-semibold ${filter === 'all' ? 'bg-gray-800 text-white' : 'bg-white'}`
+          }, `Todos (${orders.length})`),
+          React.createElement('button', {
+            onClick: () => this.setState({ filter: 'Pendente' }),
+            className: `px-4 py-2 rounded-full font-semibold ${filter === 'Pendente' ? 'bg-yellow-500 text-white' : 'bg-white'}`
+          }, `Pendente (${pendingCount})`),
+          React.createElement('button', {
+            onClick: () => this.setState({ filter: 'Em preparo' }),
+            className: `px-4 py-2 rounded-full font-semibold ${filter === 'Em preparo' ? 'bg-blue-500 text-white' : 'bg-white'}`
+          }, `Em Preparo (${preparingCount})`),
+          React.createElement('button', {
+            onClick: () => this.setState({ filter: 'Feito' }),
+            className: `px-4 py-2 rounded-full font-semibold ${filter === 'Feito' ? 'bg-green-500 text-white' : 'bg-white'}`
+          }, `Feito (${doneCount})`)
+        ),
+        React.createElement('div', { className: 'space-y-4' },
+          filteredOrders.length === 0 && React.createElement('p', { className: 'text-center py-20 text-gray-500' }, 'Nenhum pedido'),
+          filteredOrders.map(order => 
+            React.createElement('div', {
+              key: order.id,
+              className: `bg-white rounded-lg p-6 shadow border-2 ${
+                order.status === 'Pendente' ? 'border-yellow-300' :
+                order.status === 'Em preparo' ? 'border-blue-300' : 'border-green-300'
+              }`
+            },
+              React.createElement('div', { className: 'flex justify-between mb-4' },
+                React.createElement('div', null,
+                  React.createElement('h3', { className: 'text-xl font-bold' }, order.customer_name),
+                  React.createElement('p', { className: 'text-sm' }, order.customer_phone),
+                  React.createElement('p', { className: 'text-sm' }, order.customer_address)
+                ),
+                React.createElement('div', { className: 'flex items-start gap-4' },
+                  React.createElement('div', { className: 'text-right' },
+                    React.createElement('p', { className: 'text-2xl font-bold text-red-600' }, `R$ ${order.total.toFixed(2)}`),
+                    React.createElement('p', { className: 'text-xs' }, new Date(order.created_at).toLocaleDateString('pt-BR'))
+                  ),
+                  React.createElement('button', {
+                    onClick: () => this.handleDelete(order.id, order.customer_name),
+                    className: 'text-red-500 hover:bg-red-50 p-2 rounded',
+                    title: 'Deletar'
+                  }, '🗑️')
+                )
+              ),
+              React.createElement('div', { className: 'bg-gray-100 p-4 rounded mb-4' },
+                React.createElement('p', { className: 'font-semibold mb-2' }, 'Itens:'),
+                order.items && order.items.map((item, i) =>
+                  React.createElement('div', { key: i, className: 'mb-3' },
+                    React.createElement('p', { className: 'font-semibold' }, `${item.quantity}x ${item.name} - R$ ${item.price.toFixed(2)}`),
+                    item.customization && React.createElement('div', { className: 'text-sm ml-4 mt-1' },
+                      React.createElement('p', null, `Massa: ${item.customization.massa}`),
+                      React.createElement('p', null, `Recheio: ${item.customization.recheio}`),
+                      React.createElement('p', null, `Cobertura: ${item.customization.cobertura}`),
+                      item.customization.observacoes && React.createElement('p', { className: 'bg-yellow-100 p-2 rounded mt-1' }, `Obs: ${item.customization.observacoes}`)
+                    )
+                  )
+                )
+              ),
+              React.createElement('div', { className: 'flex justify-between items-center pt-4 border-t' },
+                React.createElement('div', { className: 'flex-1' },
+                  React.createElement('p', { className: 'text-sm mb-2' }, `Pagamento: ${order.payment_method}`),
+                  React.createElement('select', {
+                    value: order.status,
+                    onChange: (e) => this.handleStatusChange(order.id, e.target.value),
+                    className: 'w-full px-4 py-2 rounded border'
+                  },
+                    React.createElement('option', { value: 'Pendente' }, '🟡 Pendente'),
+                    React.createElement('option', { value: 'Em preparo' }, '🔵 Em Preparo'),
+                    React.createElement('option', { value: 'Feito' }, '🟢 Feito')
+                  )
+                ),
+                React.createElement('span', {
+                  className: `ml-4 px-6 py-3 rounded-full font-bold ${
+                    order.status === 'Pendente' ? 'bg-yellow-100' :
+                    order.status === 'Em preparo' ? 'bg-blue-100' : 'bg-green-100'
+                  }`
+                }, order.status)
+              )
+            )
+          )
+        )
+      )
+    );
+  }
+}
 
 export default AdminDashboard;
