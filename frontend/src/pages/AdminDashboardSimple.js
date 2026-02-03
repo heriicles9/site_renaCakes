@@ -43,56 +43,6 @@ const AdminDashboard = () => {
     navigate('/admin');
   };
 
-  const OrderCard = ({ order }) => (
-    <div className="bg-white rounded-2xl p-6 mb-4 shadow-md border border-brand-pink/20">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="font-heading text-xl font-bold text-brand-brown">{order.customer_name}</h3>
-          <p className="text-sm text-brand-brown/70">{order.customer_phone}</p>
-          <p className="text-sm text-brand-brown/70">{order.customer_address}</p>
-        </div>
-        <div className="text-right">
-          <p className="font-bold text-2xl text-brand-rose">R$ {order.total.toFixed(2)}</p>
-          <p className="text-xs text-brand-brown/60">
-            {new Date(order.created_at).toLocaleDateString('pt-BR')}
-          </p>
-        </div>
-      </div>
-
-      <div className="mb-4">
-        <p className="font-semibold text-brand-brown mb-2">Itens:</p>
-        {order.items && order.items.map((item, idx) => (
-          <div key={idx} className="bg-brand-pink/10 p-3 rounded-lg mb-2">
-            <p className="font-semibold text-brand-brown">
-              {item.quantity}x {item.name} - R$ {item.price.toFixed(2)}
-            </p>
-            {item.customization && (
-              <div className="mt-2 text-sm text-brand-brown/80">
-                <p>Massa: {item.customization.massa}</p>
-                <p>Recheio: {item.customization.recheio}</p>
-                <p>Cobertura: {item.customization.cobertura}</p>
-                {item.customization.observacoes && (
-                  <p className="bg-yellow-50 p-2 rounded mt-1">
-                    Obs: {item.customization.observacoes}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between pt-4 border-t border-brand-pink/20">
-        <p className="text-sm text-brand-brown/70">
-          <strong>Pagamento:</strong> {order.payment_method}
-        </p>
-        <span className="px-4 py-2 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800">
-          {order.status}
-        </span>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-brand-cream">
       <nav className="bg-brand-brown text-white shadow-lg">
