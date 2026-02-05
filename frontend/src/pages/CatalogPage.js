@@ -17,7 +17,7 @@ const CatalogPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const { addToCart } = useCart();
 
-  // --- NOVAS CATEGORIAS (IGUAL FOTO 2) ---
+  // Categorias exatas (Tem que bater com o Admin)
   const categories = ['Todos', 'Bolos Redondos', 'Bolos Retangulares', 'Doces', 'Kits'];
 
   useEffect(() => {
@@ -25,19 +25,23 @@ const CatalogPage = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedCategory === 'Todos') {
-      setFilteredProducts(products);
-    } else {
-      // Filtra exatamente pelo nome da categoria
-      setFilteredProducts(products.filter((p) => p.category === selectedCategory));
+    // 1. Filtra por Categoria
+    let result = products;
+    if (selectedCategory !== 'Todos') {
+      result = products.filter((p) => p.category === selectedCategory);
     }
+
+    // 2. ORDENAÇÃO AUTOMÁTICA POR PREÇO (Menor -> Maior)
+    // Isso garante que o Bolo 10cm apareça antes do 15cm, 20cm, etc.
+    result.sort((a, b) => a.price - b.price);
+
+    setFilteredProducts([...result]);
   }, [selectedCategory, products]);
 
   const fetchProducts = async () => {
     try {
       const response = await axios.get(`${API}/products`);
       setProducts(response.data);
-      setFilteredProducts(response.data);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
       toast.error('Erro ao carregar cardápio');
@@ -49,7 +53,6 @@ const CatalogPage = () => {
     toast.success(`${product.name} adicionado!`);
   };
 
-  // Verifica se é personalizável (Qualquer coisa com "Bolo" no nome entra aqui)
   const isCustomizable = (category) => {
     return category && (category.includes('Bolo') || category.includes('Tortas'));
   };
@@ -59,8 +62,7 @@ const CatalogPage = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* CABEÇALHO IGUAL FOTO 2 */}
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mb-10">
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mb-10 text-center md:text-left">
           <h1 className="font-serif text-4xl md:text-5xl font-bold text-[#4A3B32] mb-3">
             Nosso Catálogo
           </h1>
@@ -69,21 +71,21 @@ const CatalogPage = () => {
           </p>
         </motion.div>
 
-        {/* FILTROS COM ÍCONE */}
+        {/* FILTROS */}
         <div className="mb-10">
-          <div className="flex items-center gap-2 mb-4 text-[#4A3B32] font-medium">
+          <div className="flex items-center gap-2 mb-4 text-[#4A3B32] font-medium justify-center md:justify-start">
              <Filter size={20} />
              <span>Filtrar por categoria:</span>
           </div>
           
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 justify-center md:justify-start">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
                 className={`px-6 py-2.5 rounded-full font-bold transition-all text-sm md:text-base ${
                   selectedCategory === category
-                    ? 'bg-[#4A3B32] text-white shadow-lg'
+                    ? 'bg-[#4A3B32] text-white shadow-lg scale-105'
                     : 'bg-white text-gray-600 border border-gray-200 hover:border-[#D48D92] hover:text-[#D48D92]'
                 }`}
               >
@@ -109,7 +111,6 @@ const CatalogPage = () => {
                 ) : (
                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sem Imagem</div>
                 )}
-                {/* Overlay suave ao passar o mouse */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
               </Link>
               
@@ -148,10 +149,13 @@ const CatalogPage = () => {
         </motion.div>
 
         {filteredProducts.length === 0 && (
-          <div className="text-center py-20 bg-white rounded-3xl border border-gray-100">
-            <p className="text-xl text-gray-400 font-light">Nenhum produto encontrado na categoria <strong>{selectedCategory}</strong>.</p>
-            <button onClick={() => setSelectedCategory('Todos')} className="mt-4 text-[#D48D92] font-bold hover:underline">
-                Ver todos os produtos
+          <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 mx-auto w-full">
+            <p className="text-xl text-gray-400 font-light mb-2">
+              Nenhum produto encontrado em <strong>{selectedCategory}</strong>.
+            </p>
+            <p className="text-sm text-gray-400 mb-6">Verifique se o produto está cadastrado com a categoria correta no Admin.</p>
+            <button onClick={() => setSelectedCategory('Todos')} className="text-[#D48D92] font-bold hover:underline border border-[#D48D92] px-4 py-2 rounded-full hover:bg-pink-50">
+                Limpar Filtros
             </button>
           </div>
         )}
