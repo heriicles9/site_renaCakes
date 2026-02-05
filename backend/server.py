@@ -18,7 +18,7 @@ load_dotenv(ROOT_DIR / '.env')
 
 mongo_url = os.environ.get('MONGO_URL')
 if not mongo_url:
-    mongo_url = "mongodb://localhost:27017" # Fallback
+    mongo_url = "mongodb://localhost:27017"
 
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get('DB_NAME', 'renaildes_cakes')]
@@ -43,10 +43,19 @@ class Product(BaseModel):
 
 class ProductCreate(BaseModel):
     name: str
-    description: str = "" # Use para massas e recheios
+    description: str = ""
     price: float
     category: str
     image_url: str = ""
+
+class Settings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = "app_settings"
+    delivery_fee: float = 5.0
+    pix_key: str = "chave@pix.com"
+    available_massas: str = "Baunilha, Chocolate, Cenoura"
+    available_recheios: str = "Brigadeiro, Ninho, Doce de Leite"
+    contact_phone: str = "(00) 00000-0000"
 
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -94,7 +103,6 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
 
 @api_router.post("/admin/login")
 async def admin_login(login: AdminLogin):
-    # Dica: Mude aqui se quiser trocar a senha fixa
     admin_user = os.environ.get('ADMIN_USERNAME', 'admin')
     admin_pass = os.environ.get('ADMIN_PASSWORD', 'admin123')
     
@@ -103,7 +111,24 @@ async def admin_login(login: AdminLogin):
         return {"access_token": token, "token_type": "bearer"}
     raise HTTPException(status_code=401, detail="Senha incorreta")
 
-# PRODUTOS (CARDÁPIO)
+# CONFIGURAÇÕES (TAXAS, MASSAS, RECHEIOS)
+@api_router.get("/settings")
+async def get_settings():
+    settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
+    if not settings:
+        # Cria padrão se não existir
+        default = Settings()
+        await db.settings.insert_one(default.model_dump())
+        return default
+    return settings
+
+@api_router.put("/settings")
+async def update_settings(settings: Settings, token: dict = Depends(verify_token)):
+    doc = settings.model_dump()
+    await db.settings.update_one({"id": "app_settings"}, {"$set": doc}, upsert=True)
+    return doc
+
+# PRODUTOS
 @api_router.get("/products")
 async def get_products():
     return await db.products.find({}, {"_id": 0}).to_list(1000)
@@ -148,7 +173,6 @@ async def delete_order(order_id: str, token: dict = Depends(verify_token)):
 
 app.include_router(api_router)
 
-# CORS (Importante para o Admin funcionar)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
