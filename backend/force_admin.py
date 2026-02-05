@@ -5,6 +5,7 @@ from passlib.context import CryptContext
 # --- DADOS DO ADMIN ---
 USUARIO = "admin"
 SENHA_TEXTO = "admin123"
+NOME_DO_BANCO = "renaildes_cakes" # <--- Aqui está a correção!
 # ----------------------
 
 mongo_url = os.environ.get("MONGO_URL")
@@ -15,14 +16,15 @@ else:
     try:
         # Conecta
         client = MongoClient(mongo_url)
-        db = client.get_database()
+        # Força o uso do banco correto
+        db = client[NOME_DO_BANCO] 
         users = db["users"]
         
         # Criptografa a senha
         pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         senha_hash = pwd_context.hash(SENHA_TEXTO)
 
-        # O COMANDO MÁGICO: upsert=True (Atualiza se existe, CRIA se não existe)
+        # O COMANDO MÁGICO: upsert=True
         users.update_one(
             {"username": USUARIO}, 
             {"$set": {
@@ -34,7 +36,7 @@ else:
             upsert=True
         )
         
-        print(f"✅ SUCESSO! Usuário '{USUARIO}' garantido com senha '{SENHA_TEXTO}'.")
+        print(f"✅ SUCESSO! Usuário '{USUARIO}' garantido no banco '{NOME_DO_BANCO}'.")
         
     except Exception as e:
         print(f"❌ Erro no banco: {e}")
