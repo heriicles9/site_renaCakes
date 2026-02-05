@@ -17,7 +17,8 @@ const CatalogPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const { addToCart } = useCart();
 
-  const categories = ['Todos', 'Bolos', 'Doces', 'Salgados']; // Ajustei para bater com o Admin
+  // Categorias para o filtro (devem bater com o que você usa no Admin)
+  const categories = ['Todos', 'Bolos', 'Doces', 'Salgados'];
 
   useEffect(() => {
     fetchProducts();
@@ -27,14 +28,17 @@ const CatalogPage = () => {
     if (selectedCategory === 'Todos') {
       setFilteredProducts(products);
     } else {
-      setFilteredProducts(products.filter((p) => p.category === selectedCategory));
+      // Filtra se a categoria for exata OU se o produto contiver o nome da categoria
+      // Ex: Se filtro for 'Bolos', mostra 'Bolos Redondos' também
+      setFilteredProducts(products.filter((p) => 
+        p.category === selectedCategory || p.category.includes(selectedCategory)
+      ));
     }
   }, [selectedCategory, products]);
 
   const fetchProducts = async () => {
     try {
       const response = await axios.get(`${API}/products`);
-      console.log("Produtos carregados:", response.data); // Log para debug
       setProducts(response.data);
       setFilteredProducts(response.data);
     } catch (error) {
@@ -46,6 +50,16 @@ const CatalogPage = () => {
   const handleAddToCart = (product) => {
     addToCart(product);
     toast.success(`${product.name} adicionado!`);
+  };
+
+  // Função inteligente para decidir se é Bolo (Personalizável)
+  const isCustomizable = (category) => {
+    return category && (
+      category.includes('Bolo') || 
+      category.includes('Tortas') ||
+      category === 'Bolos Redondos' || 
+      category === 'Bolos Retangulares'
+    );
   };
 
   return (
@@ -79,7 +93,7 @@ const CatalogPage = () => {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProducts.map((product, index) => (
             <motion.div
-              key={product.id || index} // Fallback se não tiver ID
+              key={product.id || index}
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: index * 0.05 }}
@@ -103,18 +117,18 @@ const CatalogPage = () => {
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                   <span className="text-2xl font-bold text-pink-600">R$ {product.price.toFixed(2)}</span>
                   
-                  {/* Se for Bolo, mostra Personalizar. Se for outro, Adicionar direto */}
-                  {product.category === 'Bolos' ? (
+                  {/* LÓGICA CORRIGIDA AQUI */}
+                  {isCustomizable(product.category) ? (
                     <Link
                       to={`/produto/${product.id}`}
-                      className="bg-pink-600 text-white px-5 py-2 rounded-full font-bold hover:bg-pink-700 flex items-center gap-2 text-sm"
+                      className="bg-pink-900 text-white px-5 py-2 rounded-full font-bold hover:bg-pink-800 flex items-center gap-2 text-sm shadow-md"
                     >
                       <Filter size={16} /> Personalizar
                     </Link>
                   ) : (
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="bg-green-600 text-white px-5 py-2 rounded-full font-bold hover:bg-green-700 flex items-center gap-2 text-sm"
+                      className="bg-green-600 text-white px-5 py-2 rounded-full font-bold hover:bg-green-700 flex items-center gap-2 text-sm shadow-md"
                     >
                       <ShoppingBag size={16} /> Adicionar
                     </button>
