@@ -21,11 +21,11 @@ const ProductDetailPage = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [quantity, setQuantity] = useState(1);
 
-  // Estados de Opções (Agora dinâmicos)
+  // Estados de Opções (Vindos do Admin)
   const [massasOptions, setMassasOptions] = useState([]);
   const [recheiosOptions, setRecheiosOptions] = useState([]);
 
-  // Opções de Cobertura (Fixas por enquanto)
+  // Opções de Cobertura (Fixas)
   const coberturasOptions = [
     { name: 'Chantilly', price: 0 },
     { name: 'Ganache', price: 0 },
@@ -39,6 +39,8 @@ const ProductDetailPage = () => {
   const [selectedRecheios, setSelectedRecheios] = useState([]);
   const [selectedCobertura, setSelectedCobertura] = useState(coberturasOptions[0]);
   const [observacoes, setObservacoes] = useState('');
+  
+  // Limite de Seleção
   const [maxSelections, setMaxSelections] = useState(1);
 
   useEffect(() => {
@@ -53,11 +55,10 @@ const ProductDetailPage = () => {
         const prod = prodRes.data;
         setProduct(prod);
         
-        // Carrega configurações do Admin ou usa padrão
+        // 1. Carrega opções do Admin
         if (settingsRes.data.massas_options && settingsRes.data.massas_options.length > 0) {
           setMassasOptions(settingsRes.data.massas_options);
         } else {
-          // Fallback se não configurou no Admin ainda
           setMassasOptions([{ name: 'Baunilha', price: 0 }, { name: 'Chocolate', price: 0 }]);
         }
 
@@ -67,12 +68,21 @@ const ProductDetailPage = () => {
           setRecheiosOptions([{ name: 'Brigadeiro', price: 0 }, { name: 'Ninho', price: 0 }]);
         }
 
-        // Regra de Limite (Tamanho Grande = 2 Sabores)
+        // 2. NOVA REGRA DE LIMITE (20cm para cima = 2 sabores)
         const name = prod.name.toLowerCase();
-        if (name.includes('25cm') || name.includes('30cm') || name.includes('35cm') || name.includes('40cm')) {
-          setMaxSelections(2);
+        
+        if (
+          name.includes('20cm') || 
+          name.includes('22cm') || 
+          name.includes('25cm') || 
+          name.includes('28cm') || 
+          name.includes('30cm') || 
+          name.includes('35cm') || 
+          name.includes('40cm')
+        ) {
+          setMaxSelections(2); // Grande
         } else {
-          setMaxSelections(1);
+          setMaxSelections(1); // Pequeno (10cm, 15cm)
         }
 
       } catch (err) {
@@ -90,11 +100,12 @@ const ProductDetailPage = () => {
 
   const handleToggleOption = (item, currentList, setList) => {
     const isSelected = currentList.find(i => i.name === item.name);
+    
     if (isSelected) {
       setList(currentList.filter(i => i.name !== item.name));
     } else {
       if (maxSelections === 1) {
-        setList([item]);
+        setList([item]); // Troca direta
       } else {
         if (currentList.length < maxSelections) {
           setList([...currentList, item]);
@@ -161,7 +172,11 @@ const ProductDetailPage = () => {
                       <p className="text-sm text-gray-500 mb-1">Preço Base</p>
                       <p className="text-4xl font-bold text-[#D48D92]">R$ {product.price.toFixed(2)}</p>
                   </div>
-                  {maxSelections > 1 && <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-green-800 font-bold text-sm h-fit mb-2">✨ Escolha até 2 sabores!</div>}
+                  {maxSelections > 1 ? (
+                    <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-green-800 font-bold text-sm h-fit mb-2">✨ Tamanho Grande: Escolha até 2 sabores!</div>
+                  ) : (
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm h-fit mb-2">ℹ️ Escolha 1 sabor de cada</div>
+                  )}
                 </div>
             </div>
         </div>
@@ -176,7 +191,10 @@ const ProductDetailPage = () => {
 
             {/* MASSAS */}
             <section>
-                <h3 className="text-lg font-bold text-[#4A3B32] mb-4">1. Escolha a Massa <span className="text-red-400 text-xs bg-red-50 px-2 py-1 rounded-full ml-2">* Obrigatório</span></h3>
+                <h3 className="text-lg font-bold text-[#4A3B32] mb-4">
+                  1. Escolha a Massa {maxSelections > 1 ? '(Até 2)' : '(Apenas 1)'}
+                  <span className="text-red-400 text-xs bg-red-50 px-2 py-1 rounded-full ml-2">* Obrigatório</span>
+                </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {massasOptions.map((m) => {
                         const isSelected = selectedMassas.find(i => i.name === m.name);
@@ -193,7 +211,10 @@ const ProductDetailPage = () => {
 
             {/* RECHEIOS */}
             <section>
-                <h3 className="text-lg font-bold text-[#4A3B32] mb-4">2. Escolha o Recheio <span className="text-red-400 text-xs bg-red-50 px-2 py-1 rounded-full ml-2">* Obrigatório</span></h3>
+                <h3 className="text-lg font-bold text-[#4A3B32] mb-4">
+                  2. Escolha o Recheio {maxSelections > 1 ? '(Até 2)' : '(Apenas 1)'}
+                  <span className="text-red-400 text-xs bg-red-50 px-2 py-1 rounded-full ml-2">* Obrigatório</span>
+                </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {recheiosOptions.map((r) => {
                         const isSelected = selectedRecheios.find(i => i.name === r.name);
