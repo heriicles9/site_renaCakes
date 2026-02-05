@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ShoppingBag, ArrowLeft, Check } from 'lucide-react';
+import { ShoppingBag, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -18,11 +18,12 @@ const ProductDetailPage = () => {
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(''); // Para ver o erro na tela
   const [quantity, setQuantity] = useState(1);
   
-  // Opções vindas do Backend (Configurações)
-  const [availableMassas, setAvailableMassas] = useState([]);
-  const [availableRecheios, setAvailableRecheios] = useState([]);
+  // Opções padrão caso o backend de configurações falhe
+  const [availableMassas, setAvailableMassas] = useState(['Baunilha', 'Chocolate', 'Cenoura']);
+  const [availableRecheios, setAvailableRecheios] = useState(['Brigadeiro', 'Ninho', 'Doce de Leite']);
 
   // Escolhas do usuário
   const [massa, setMassa] = useState('');
@@ -30,38 +31,50 @@ const ProductDetailPage = () => {
   const [observacoes, setObservacoes] = useState('');
 
   useEffect(() => {
-    fetchData();
+    const loadPageData = async () => {
+      setLoading(true);
+      setErrorMsg('');
+
+      try {
+        // 1. Tenta buscar o Produto (Prioridade Máxima)
+        console.log(`Buscando produto: ${API}/products/${id}`);
+        const prodRes = await axios.get(`${API}/products/${id}`);
+        setProduct(prodRes.data);
+
+        // 2. Tenta buscar Configurações (Se falhar, não quebra a página)
+        try {
+          const settingsRes = await axios.get(`${API}/settings`);
+          if (settingsRes.data.available_massas) {
+            setAvailableMassas(settingsRes.data.available_massas.split(',').map(item => item.trim()));
+          }
+          if (settingsRes.data.available_recheios) {
+            setAvailableRecheios(settingsRes.data.available_recheios.split(',').map(item => item.trim()));
+          }
+        } catch (settingsErr) {
+          console.warn("Não foi possível carregar configurações personalizadas. Usando padrão.", settingsErr);
+          // Não faz nada, mantém os arrays padrão definidos no useState
+        }
+
+      } catch (err) {
+        console.error('Erro fatal ao carregar produto:', err);
+        setErrorMsg('Erro ao carregar produto. Verifique se o Backend foi atualizado.');
+        // Se der erro no produto, aí sim avisamos
+        if (err.response && err.response.status === 404) {
+          toast.error('Produto não encontrado no sistema.');
+        } else {
+          toast.error('Erro de conexão com o servidor.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      loadPageData();
+    }
   }, [id]);
 
-  const fetchData = async () => {
-    try {
-      // Busca o Produto E as Configurações ao mesmo tempo
-      const [prodRes, settingsRes] = await Promise.all([
-        axios.get(`${API}/products/${id}`),
-        axios.get(`${API}/settings`)
-      ]);
-
-      setProduct(prodRes.data);
-
-      // Processa as massas e recheios (transforma a string "A, B, C" em array ["A", "B", "C"])
-      if (settingsRes.data.available_massas) {
-        setAvailableMassas(settingsRes.data.available_massas.split(',').map(item => item.trim()));
-      }
-      if (settingsRes.data.available_recheios) {
-        setAvailableRecheios(settingsRes.data.available_recheios.split(',').map(item => item.trim()));
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Erro:', error);
-      toast.error('Produto não encontrado ou erro de conexão.');
-      navigate('/catalogo');
-    }
-  };
-
-  const isCustomizable = product && product.category === 'Bolos';
-
-  // Verifica se o formulário está válido
+  const isCustomizable = product && (product.category.includes('Bolo') || product.category.includes('Tortas'));
   const isFormValid = !isCustomizable || (massa && recheio);
 
   const handleAddToCart = () => {
@@ -79,13 +92,25 @@ const ProductDetailPage = () => {
 
     addToCart(itemToAdd, quantity);
     toast.success(`${quantity}x ${product.name} adicionado!`);
-    navigate('/catalogo'); // Opcional: voltar para comprar mais
+    navigate('/catalogo');
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-xl font-bold text-pink-900 animate-pulse">Carregando delícia...</div>
+        <div className="text-xl font-bold text-pink-900 animate-pulse">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (errorMsg || !product) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <h2 className="text-2xl font-bold text-red-600 mb-2">Ops! Algo deu errado.</h2>
+        <p className="text-gray-700 mb-4">{errorMsg || "Produto não encontrado."}</p>
+        <button onClick={() => navigate('/catalogo')} className="bg-pink-600 text-white px-6 py-2 rounded-full">
+          Voltar ao Catálogo
+        </button>
       </div>
     );
   }
@@ -96,115 +121,77 @@ const ProductDetailPage = () => {
 
       <div className="max-w-6xl mx-auto px-4 py-12">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-600 hover:text-pink-600 mb-8 font-medium">
-          <ArrowLeft size={20} /> Voltar para o Cardápio
+          <ArrowLeft size={20} /> Voltar
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* FOTO DO PRODUTO */}
-          <motion.div initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="rounded-2xl overflow-hidden shadow-2xl h-[400px] lg:h-[600px] border-4 border-white">
+          <motion.div initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="rounded-2xl overflow-hidden shadow-xl border-4 border-white bg-white h-[400px] lg:h-[500px]">
             {product.image_url ? (
               <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">Sem Foto</div>
+              <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">Sem Foto</div>
             )}
           </motion.div>
 
-          {/* DETALHES E PERSONALIZAÇÃO */}
+          {/* DETALHES */}
           <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">{product.name}</h1>
             <p className="text-pink-600 font-bold text-3xl mb-6">R$ {product.price.toFixed(2)}</p>
             
             <p className="text-gray-600 text-lg leading-relaxed mb-8 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-              {product.description || "Sem descrição detalhada."}
+              {product.description || "Sem descrição."}
             </p>
 
-            {/* ÁREA DE PERSONALIZAÇÃO (SÓ APARECE PARA BOLOS) */}
+            {/* PERSONALIZAÇÃO */}
             {isCustomizable && (
               <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-pink-100 mb-8">
-                <h3 className="text-xl font-bold text-pink-900 mb-4 flex items-center gap-2">
-                   🎨 Personalize seu Bolo
-                </h3>
+                <h3 className="text-xl font-bold text-pink-900 mb-4">🎨 Personalize seu Bolo</h3>
 
-                {/* Seleção de Massa */}
                 <div className="mb-4">
-                  <label className="block text-gray-700 font-bold mb-2">Escolha a Massa:</label>
-                  <select 
-                    value={massa} 
-                    onChange={(e) => setMassa(e.target.value)}
-                    className="w-full p-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
-                  >
+                  <label className="block text-gray-700 font-bold mb-2">Massa:</label>
+                  <select value={massa} onChange={(e) => setMassa(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-lg">
                     <option value="">Selecione...</option>
-                    {availableMassas.length > 0 ? (
-                      availableMassas.map((m, i) => <option key={i} value={m}>{m}</option>)
-                    ) : (
-                      // Fallback se não tiver nada configurado
-                      <>
-                        <option value="Baunilha">Baunilha</option>
-                        <option value="Chocolate">Chocolate</option>
-                      </>
-                    )}
+                    {availableMassas.map((m, i) => <option key={i} value={m}>{m}</option>)}
                   </select>
                 </div>
 
-                {/* Seleção de Recheio */}
                 <div className="mb-4">
-                  <label className="block text-gray-700 font-bold mb-2">Escolha o Recheio:</label>
-                  <select 
-                    value={recheio} 
-                    onChange={(e) => setRecheio(e.target.value)}
-                    className="w-full p-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
-                  >
+                  <label className="block text-gray-700 font-bold mb-2">Recheio:</label>
+                  <select value={recheio} onChange={(e) => setRecheio(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-lg">
                     <option value="">Selecione...</option>
-                    {availableRecheios.length > 0 ? (
-                      availableRecheios.map((r, i) => <option key={i} value={r}>{r}</option>)
-                    ) : (
-                      <>
-                        <option value="Brigadeiro">Brigadeiro</option>
-                        <option value="Doce de Leite">Doce de Leite</option>
-                      </>
-                    )}
+                    {availableRecheios.map((r, i) => <option key={i} value={r}>{r}</option>)}
                   </select>
                 </div>
 
-                {/* Observações */}
                 <div>
-                  <label className="block text-gray-700 font-bold mb-2">Observações (opcional):</label>
-                  <textarea
-                    value={observacoes}
-                    onChange={(e) => setObservacoes(e.target.value)}
-                    placeholder="Ex: Escrever 'Parabéns'..."
-                    className="w-full p-3 bg-gray-50 border rounded-lg h-24 focus:ring-2 focus:ring-pink-500 outline-none"
-                  />
+                  <label className="block text-gray-700 font-bold mb-2">Observações:</label>
+                  <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-lg h-20" placeholder="Ex: Escrever parabéns..." />
                 </div>
               </div>
             )}
 
-            {/* CONTROLES FINAIS */}
+            {/* BOTÃO DE ADICIONAR */}
             <div className="flex items-center gap-4 mb-6">
-               <div className="flex items-center border-2 border-gray-200 rounded-full">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-2 font-bold hover:bg-gray-100 rounded-l-full text-lg">-</button>
-                  <span className="px-4 font-bold text-xl">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-2 font-bold hover:bg-gray-100 rounded-r-full text-lg">+</button>
+               <div className="flex items-center border border-gray-300 rounded-full bg-white">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-2 font-bold hover:bg-gray-100 rounded-l-full">-</button>
+                  <span className="px-4 font-bold">{quantity}</span>
+                  <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-2 font-bold hover:bg-gray-100 rounded-r-full">+</button>
                </div>
-               <div className="text-gray-500 text-sm">unidades</div>
             </div>
 
             <button
               onClick={handleAddToCart}
-              className={`w-full py-4 rounded-full text-xl font-bold text-white shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-3 ${
+              className={`w-full py-4 rounded-full text-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-3 ${
                 isFormValid ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
               }`}
             >
               <ShoppingBag size={24} />
-              {isFormValid 
-                ? `Adicionar - R$ ${(product.price * quantity).toFixed(2)}`
-                : 'Selecione Massa e Recheio'}
+              {isFormValid ? 'Adicionar ao Carrinho' : 'Selecione as opções'}
             </button>
-
           </motion.div>
         </div>
       </div>
-
       <Footer />
     </div>
   );
