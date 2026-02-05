@@ -132,75 +132,98 @@ const CakeCustomizer = ({ product, onCustomizationChange }) => {
       <h3 className="font-heading text-2xl font-bold text-brand-brown mb-6">
         🎂 Monte Seu Bolo Personalizado
       </h3>
+      
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <p className="text-sm font-semibold text-blue-900">
+          📏 Tamanho: {product.size} ({product.servings})
+        </p>
+        <p className="text-sm text-blue-800 mt-1">
+          {maxSelections.massas === 1 
+            ? '• Selecione 1 massa e 1 recheio' 
+            : '• Selecione até 2 massas e 2 recheios diferentes'}
+        </p>
+      </div>
 
       <div className="space-y-6">
         <div>
           <label className="block text-brand-brown font-semibold mb-3">
-            Escolha a Massa *
+            Escolha a(s) Massa(s) * 
+            <span className="text-sm font-normal text-brand-brown/60">
+              ({(customization.massas || []).length}/{maxSelections.massas} selecionada(s))
+            </span>
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {massasDisponiveis.map((massa) => (
-              <button
-                key={massa.nome}
-                onClick={() => handleChange('massa', massa.nome)}
-                className={`relative p-4 rounded-xl border-2 transition-all transform hover:scale-105 ${
-                  customization.massa === massa.nome
-                    ? 'border-brand-brown bg-brand-brown text-white shadow-lg'
-                    : 'border-brand-pink/50 bg-white text-brand-brown hover:border-brand-brown/50'
-                }`}
-                data-testid={`massa-${massa.nome.toLowerCase().replace(/ /g, '-')}`}
-              >
-                {customization.massa === massa.nome && (
-                  <Check className="absolute top-2 right-2" size={18} />
-                )}
-                <div className="font-semibold text-sm mb-1">{massa.nome}</div>
-                {massa.preco > 0 && (
-                  <div className="text-xs">
-                    +R$ {massa.preco.toFixed(2)}
-                  </div>
-                )}
-                {massa.especial && (
-                  <span className="text-xs bg-brand-rose px-2 py-0.5 rounded-full">
-                    Especial
-                  </span>
-                )}
-              </button>
-            ))}
+            {massasDisponiveis.map((massa) => {
+              const isSelected = (customization.massas || []).includes(massa.nome);
+              return (
+                <button
+                  key={massa.nome}
+                  onClick={() => handleChange('massas', massa.nome)}
+                  className={`relative p-4 rounded-xl border-2 transition-all transform hover:scale-105 ${
+                    isSelected
+                      ? 'border-brand-brown bg-brand-brown text-white shadow-lg'
+                      : 'border-brand-pink/50 bg-white text-brand-brown hover:border-brand-brown/50'
+                  }`}
+                  data-testid={`massa-${massa.nome.toLowerCase().replace(/ /g, '-')}`}
+                >
+                  {isSelected && (
+                    <Check className="absolute top-2 right-2" size={18} />
+                  )}
+                  <div className="font-semibold text-sm mb-1">{massa.nome}</div>
+                  {massa.preco > 0 && (
+                    <div className="text-xs">
+                      +R$ {massa.preco.toFixed(2)}
+                    </div>
+                  )}
+                  {massa.especial && (
+                    <span className="text-xs bg-brand-rose px-2 py-0.5 rounded-full">
+                      Premium
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div>
           <label className="block text-brand-brown font-semibold mb-3">
-            Escolha o Recheio *
+            Escolha o(s) Recheio(s) * 
+            <span className="text-sm font-normal text-brand-brown/60">
+              ({(customization.recheios || []).length}/{maxSelections.recheios} selecionado(s))
+            </span>
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {recheiosDisponiveis.map((recheio) => (
-              <button
-                key={recheio.nome}
-                onClick={() => handleChange('recheio', recheio.nome)}
-                className={`relative p-4 rounded-xl border-2 transition-all transform hover:scale-105 ${
-                  customization.recheio === recheio.nome
-                    ? 'border-brand-brown bg-brand-brown text-white shadow-lg'
-                    : 'border-brand-pink/50 bg-white text-brand-brown hover:border-brand-brown/50'
-                }`}
-                data-testid={`recheio-${recheio.nome.toLowerCase().replace(/ /g, '-')}`}
-              >
-                {customization.recheio === recheio.nome && (
-                  <Check className="absolute top-2 right-2" size={18} />
-                )}
-                <div className="font-semibold text-sm mb-1">{recheio.nome}</div>
-                {recheio.preco > 0 && (
-                  <div className="text-xs">
-                    +R$ {recheio.preco.toFixed(2)}
-                  </div>
-                )}
-                {recheio.especial && (
-                  <span className="text-xs bg-brand-rose px-2 py-0.5 rounded-full">
-                    Especial
-                  </span>
-                )}
-              </button>
-            ))}
+            {recheiosDisponiveis.map((recheio) => {
+              const isSelected = (customization.recheios || []).includes(recheio.nome);
+              return (
+                <button
+                  key={recheio.nome}
+                  onClick={() => handleChange('recheios', recheio.nome)}
+                  className={`relative p-4 rounded-xl border-2 transition-all transform hover:scale-105 ${
+                    isSelected
+                      ? 'border-brand-brown bg-brand-brown text-white shadow-lg'
+                      : 'border-brand-pink/50 bg-white text-brand-brown hover:border-brand-brown/50'
+                  }`}
+                  data-testid={`recheio-${recheio.nome.toLowerCase().replace(/ /g, '-')}`}
+                >
+                  {isSelected && (
+                    <Check className="absolute top-2 right-2" size={18} />
+                  )}
+                  <div className="font-semibold text-sm mb-1">{recheio.nome}</div>
+                  {recheio.preco > 0 && (
+                    <div className="text-xs">
+                      +R$ {recheio.preco.toFixed(2)}
+                    </div>
+                  )}
+                  {recheio.especial && (
+                    <span className="text-xs bg-brand-rose px-2 py-0.5 rounded-full">
+                      Premium
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
