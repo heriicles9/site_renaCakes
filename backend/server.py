@@ -7,7 +7,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional
+from typing import List, Optional, Union
 import uuid
 from datetime import datetime, timezone, timedelta
 import jwt
@@ -48,14 +48,20 @@ class ProductCreate(BaseModel):
     category: str
     image_url: str = ""
 
+# Novo modelo para as opções de personalização
+class CustomOption(BaseModel):
+    name: str
+    price: float = 0.0
+
 class Settings(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = "app_settings"
     delivery_fee: float = 5.0
-    pix_key: str = "chave@pix.com"
-    available_massas: str = "Baunilha, Chocolate, Cenoura"
-    available_recheios: str = "Brigadeiro, Ninho, Doce de Leite"
-    contact_phone: str = "(00) 00000-0000"
+    pix_key: str = ""
+    contact_phone: str = ""
+    # Agora usamos listas de objetos em vez de strings
+    massas_options: List[CustomOption] = []
+    recheios_options: List[CustomOption] = []
 
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -68,6 +74,7 @@ class Order(BaseModel):
     payment_method: str
     status: str = "Pendente"
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    delivery_fee: float = 0.0
 
 class OrderCreate(BaseModel):
     customer_name: str
@@ -132,14 +139,12 @@ async def update_settings(settings: Settings, token: dict = Depends(verify_token
 async def get_products():
     return await db.products.find({}, {"_id": 0}).to_list(1000)
 
-# --- AQUI ESTAVA FALTANDO ESSA ROTA! ---
 @api_router.get("/products/{product_id}")
 async def get_product(product_id: str):
     product = await db.products.find_one({"id": product_id}, {"_id": 0})
     if not product:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
     return product
-# ---------------------------------------
 
 @api_router.post("/products")
 async def create_product(product: ProductCreate, token: dict = Depends(verify_token)):
