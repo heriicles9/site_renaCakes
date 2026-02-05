@@ -68,22 +68,54 @@ const CakeCustomizer = ({ product, onCustomizationChange }) => {
   ];
 
   const handleChange = (field, value) => {
-    const newCustomization = { ...customization, [field]: value };
+    let newCustomization = { ...customization };
+    
+    if (field === 'massas') {
+      const currentMassas = newCustomization.massas || [];
+      if (currentMassas.includes(value)) {
+        // Remove se já está selecionado
+        newCustomization.massas = currentMassas.filter(m => m !== value);
+      } else if (currentMassas.length < maxSelections.massas) {
+        // Adiciona se ainda não atingiu o limite
+        newCustomization.massas = [...currentMassas, value];
+      }
+    } else if (field === 'recheios') {
+      const currentRecheios = newCustomization.recheios || [];
+      if (currentRecheios.includes(value)) {
+        newCustomization.recheios = currentRecheios.filter(r => r !== value);
+      } else if (currentRecheios.length < maxSelections.recheios) {
+        newCustomization.recheios = [...currentRecheios, value];
+      }
+    } else {
+      newCustomization[field] = value;
+    }
+    
     setCustomization(newCustomization);
     
-    const massaSelecionada = massasDisponiveis.find(m => m.nome === newCustomization.massa);
-    const recheioSelecionado = recheiosDisponiveis.find(r => r.nome === newCustomization.recheio);
-    const coberturaSelecionada = coberturasDisponiveis.find(c => c.nome === newCustomization.cobertura);
+    // Calcular preço adicional
+    let precoAdicional = 0;
     
-    const precoAdicional = 
-      (massaSelecionada?.preco || 0) + 
-      (recheioSelecionado?.preco || 0) + 
-      (coberturaSelecionada?.preco || 0);
+    (newCustomization.massas || []).forEach(massa => {
+      const massaObj = massasDisponiveis.find(m => m.nome === massa);
+      if (massaObj) precoAdicional += massaObj.preco;
+    });
+    
+    (newCustomization.recheios || []).forEach(recheio => {
+      const recheioObj = recheiosDisponiveis.find(r => r.nome === recheio);
+      if (recheioObj) precoAdicional += recheioObj.preco;
+    });
+    
+    const coberturaSelecionada = coberturasDisponiveis.find(c => c.nome === newCustomization.cobertura);
+    if (coberturaSelecionada) precoAdicional += coberturaSelecionada.preco;
+    
+    const isComplete = 
+      (newCustomization.massas && newCustomization.massas.length > 0) && 
+      (newCustomization.recheios && newCustomization.recheios.length > 0);
     
     onCustomizationChange({
       ...newCustomization,
       precoAdicional,
-      isComplete: newCustomization.massa && newCustomization.recheio
+      isComplete
     });
   };
 
