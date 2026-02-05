@@ -1,11 +1,10 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ShoppingBag, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Check } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import CakeCustomizer from '../components/CakeCustomizer';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
 
@@ -15,196 +14,195 @@ const API = `${BACKEND_URL}/api`;
 const ProductDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [customization, setCustomization] = useState(null);
   const { addToCart } = useCart();
 
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  
+  // Opções vindas do Backend (Configurações)
+  const [availableMassas, setAvailableMassas] = useState([]);
+  const [availableRecheios, setAvailableRecheios] = useState([]);
+
+  // Escolhas do usuário
+  const [massa, setMassa] = useState('');
+  const [recheio, setRecheio] = useState('');
+  const [observacoes, setObservacoes] = useState('');
+
   useEffect(() => {
-    fetchProduct();
+    fetchData();
   }, [id]);
 
-  const fetchProduct = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(`${API}/products/${id}`);
-      setProduct(response.data);
+      // Busca o Produto E as Configurações ao mesmo tempo
+      const [prodRes, settingsRes] = await Promise.all([
+        axios.get(`${API}/products/${id}`),
+        axios.get(`${API}/settings`)
+      ]);
+
+      setProduct(prodRes.data);
+
+      // Processa as massas e recheios (transforma a string "A, B, C" em array ["A", "B", "C"])
+      if (settingsRes.data.available_massas) {
+        setAvailableMassas(settingsRes.data.available_massas.split(',').map(item => item.trim()));
+      }
+      if (settingsRes.data.available_recheios) {
+        setAvailableRecheios(settingsRes.data.available_recheios.split(',').map(item => item.trim()));
+      }
+      
+      setLoading(false);
     } catch (error) {
-      console.error('Erro ao carregar produto:', error);
-      toast.error('Produto não encontrado');
+      console.error('Erro:', error);
+      toast.error('Produto não encontrado ou erro de conexão.');
       navigate('/catalogo');
     }
   };
 
-  const isCakeProduct = product && (product.category === 'Bolos Redondos' || product.category === 'Bolos Retangulares');
+  const isCustomizable = product && product.category === 'Bolos';
+
+  // Verifica se o formulário está válido
+  const isFormValid = !isCustomizable || (massa && recheio);
 
   const handleAddToCart = () => {
     if (!product) return;
 
-    if (isCakeProduct && (!customization || !customization.isComplete)) {
-      toast.error('Por favor, personalize seu bolo antes de adicionar ao carrinho!');
+    if (!isFormValid) {
+      toast.error('Por favor, escolha a massa e o recheio!');
       return;
     }
 
-    const productWithCustomization = {
+    const itemToAdd = {
       ...product,
-      customization: customization || null,
-      finalPrice: product.price + (customization?.precoAdicional || 0)
+      customization: isCustomizable ? { massa, recheio, observacoes } : null
     };
 
-    addToCart(productWithCustomization, quantity);
-    
-    if (customization) {
-      toast.success(
-        `${quantity}x ${product.name} personalizado adicionado ao carrinho!\n` +
-        `Massa: ${customization.massa}\n` +
-        `Recheio: ${customization.recheio}`
-      );
-    } else {
-      toast.success(`${quantity}x ${product.name} adicionado ao carrinho!`);
-    }
+    addToCart(itemToAdd, quantity);
+    toast.success(`${quantity}x ${product.name} adicionado!`);
+    navigate('/catalogo'); // Opcional: voltar para comprar mais
   };
 
-  const getTotalPrice = () => {
-    const basePrice = product.price;
-    const customPrice = customization?.precoAdicional || 0;
-    return (basePrice + customPrice) * quantity;
-  };
-
-  if (!product) {
+  if (loading) {
     return (
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <p className="text-xl text-brand-brown/60">Carregando...</p>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-xl font-bold text-pink-900 animate-pulse">Carregando delícia...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-brand-brown hover:text-brand-rose transition-colors mb-8 font-medium"
-          data-testid="back-button"
-        >
-          <ArrowLeft size={20} />
-          Voltar
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-600 hover:text-pink-600 mb-8 font-medium">
+          <ArrowLeft size={20} /> Voltar para o Cardápio
         </button>
 
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-12"
-        >
-          <div className="rounded-2xl overflow-hidden shadow-lg border border-brand-pink/20">
-            <img
-              src={product.image_url || 'https://images.unsplash.com/photo-1621868402792-a5c9fa6866a3?crop=entropy&cs=srgb&fm=jpg&q=85'}
-              alt={product.name}
-              className="w-full h-full object-cover"
-              data-testid="product-image"
-            />
-          </div>
-
-          <div>
-            <h1 className="font-heading text-4xl md:text-5xl font-bold text-brand-brown mb-4" data-testid="product-name">
-              {product.name}
-            </h1>
-
-            <div className="mb-6">
-              <span className="inline-block bg-brand-pink text-brand-brown px-4 py-2 rounded-full text-sm font-semibold">
-                {product.category}
-              </span>
-              {product.subcategory && (
-                <span className="inline-block bg-brand-pink/50 text-brand-brown px-4 py-2 rounded-full text-sm font-semibold ml-2">
-                  {product.subcategory}
-                </span>
-              )}
-            </div>
-
-            {product.size && (
-              <p className="text-lg text-brand-brown/80 mb-2">
-                <span className="font-semibold">Tamanho:</span> {product.size}
-              </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* FOTO DO PRODUTO */}
+          <motion.div initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="rounded-2xl overflow-hidden shadow-2xl h-[400px] lg:h-[600px] border-4 border-white">
+            {product.image_url ? (
+              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">Sem Foto</div>
             )}
+          </motion.div>
 
-            {product.servings && (
-              <p className="text-lg text-brand-brown/80 mb-6">
-                <span className="font-semibold">Rende:</span> {product.servings}
-              </p>
-            )}
-
-            <p className="text-lg text-brand-brown/70 leading-relaxed mb-8" data-testid="product-description">
-              {product.description}
+          {/* DETALHES E PERSONALIZAÇÃO */}
+          <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">{product.name}</h1>
+            <p className="text-pink-600 font-bold text-3xl mb-6">R$ {product.price.toFixed(2)}</p>
+            
+            <p className="text-gray-600 text-lg leading-relaxed mb-8 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+              {product.description || "Sem descrição detalhada."}
             </p>
 
-            <div className="bg-brand-pink/30 p-6 rounded-2xl mb-8">
-              <p className="text-sm text-brand-brown/70 mb-2">Preço Base</p>
-              <p className="font-bold text-4xl text-brand-rose" data-testid="product-price">
-                R$ {product.price.toFixed(2)}
-              </p>
-              {customization && customization.precoAdicional > 0 && (
-                <div className="mt-3 pt-3 border-t border-brand-brown/20">
-                  <p className="text-sm text-brand-brown/70">Personalização</p>
-                  <p className="font-bold text-2xl text-brand-brown">
-                    +R$ {customization.precoAdicional.toFixed(2)}
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* ÁREA DE PERSONALIZAÇÃO (SÓ APARECE PARA BOLOS) */}
+            {isCustomizable && (
+              <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-pink-100 mb-8">
+                <h3 className="text-xl font-bold text-pink-900 mb-4 flex items-center gap-2">
+                   🎨 Personalize seu Bolo
+                </h3>
 
-            <div className="mb-8">
-              <label className="block text-brand-brown font-semibold mb-3">
-                Quantidade:
-              </label>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-12 h-12 bg-brand-pink text-brand-brown rounded-full font-bold hover:bg-brand-pink/80 transition-all transform active:scale-95"
-                  data-testid="decrease-quantity"
-                >
-                  -
-                </button>
-                <span className="text-2xl font-bold text-brand-brown w-16 text-center" data-testid="quantity-display">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-12 h-12 bg-brand-pink text-brand-brown rounded-full font-bold hover:bg-brand-pink/80 transition-all transform active:scale-95"
-                  data-testid="increase-quantity"
-                >
-                  +
-                </button>
+                {/* Seleção de Massa */}
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-bold mb-2">Escolha a Massa:</label>
+                  <select 
+                    value={massa} 
+                    onChange={(e) => setMassa(e.target.value)}
+                    className="w-full p-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
+                  >
+                    <option value="">Selecione...</option>
+                    {availableMassas.length > 0 ? (
+                      availableMassas.map((m, i) => <option key={i} value={m}>{m}</option>)
+                    ) : (
+                      // Fallback se não tiver nada configurado
+                      <>
+                        <option value="Baunilha">Baunilha</option>
+                        <option value="Chocolate">Chocolate</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                {/* Seleção de Recheio */}
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-bold mb-2">Escolha o Recheio:</label>
+                  <select 
+                    value={recheio} 
+                    onChange={(e) => setRecheio(e.target.value)}
+                    className="w-full p-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-pink-500 outline-none"
+                  >
+                    <option value="">Selecione...</option>
+                    {availableRecheios.length > 0 ? (
+                      availableRecheios.map((r, i) => <option key={i} value={r}>{r}</option>)
+                    ) : (
+                      <>
+                        <option value="Brigadeiro">Brigadeiro</option>
+                        <option value="Doce de Leite">Doce de Leite</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                {/* Observações */}
+                <div>
+                  <label className="block text-gray-700 font-bold mb-2">Observações (opcional):</label>
+                  <textarea
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                    placeholder="Ex: Escrever 'Parabéns'..."
+                    className="w-full p-3 bg-gray-50 border rounded-lg h-24 focus:ring-2 focus:ring-pink-500 outline-none"
+                  />
+                </div>
               </div>
+            )}
+
+            {/* CONTROLES FINAIS */}
+            <div className="flex items-center gap-4 mb-6">
+               <div className="flex items-center border-2 border-gray-200 rounded-full">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-2 font-bold hover:bg-gray-100 rounded-l-full text-lg">-</button>
+                  <span className="px-4 font-bold text-xl">{quantity}</span>
+                  <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-2 font-bold hover:bg-gray-100 rounded-r-full text-lg">+</button>
+               </div>
+               <div className="text-gray-500 text-sm">unidades</div>
             </div>
 
             <button
               onClick={handleAddToCart}
-              disabled={isCakeProduct && (!customization || !customization.isComplete)}
-              className="w-full bg-brand-brown text-white py-4 rounded-full text-lg font-semibold hover:bg-brand-brown/90 shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              data-testid="add-to-cart-button"
+              className={`w-full py-4 rounded-full text-xl font-bold text-white shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-3 ${
+                isFormValid ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
+              }`}
             >
               <ShoppingBag size={24} />
-              {isCakeProduct && (!customization || !customization.isComplete)
-                ? 'Personalize seu bolo primeiro'
-                : `Adicionar ao Carrinho - R$ ${getTotalPrice().toFixed(2)}`}
+              {isFormValid 
+                ? `Adicionar - R$ ${(product.price * quantity).toFixed(2)}`
+                : 'Selecione Massa e Recheio'}
             </button>
-          </div>
-        </motion.div>
 
-        {isCakeProduct && (
-          <div className="mt-12">
-            <CakeCustomizer
-              product={product}
-              onCustomizationChange={setCustomization}
-            />
-          </div>
-        )}
+          </motion.div>
+        </div>
       </div>
 
       <Footer />
