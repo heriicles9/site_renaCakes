@@ -17,7 +17,7 @@ const CatalogPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const { addToCart } = useCart();
 
-  const categories = ['Todos', 'Bolos Redondos', 'Bolos Retangulares', 'Doces', 'Kits'];
+  const categories = ['Todos', 'Bolos', 'Doces', 'Salgados']; // Ajustei para bater com o Admin
 
   useEffect(() => {
     fetchProducts();
@@ -34,120 +34,89 @@ const CatalogPage = () => {
   const fetchProducts = async () => {
     try {
       const response = await axios.get(`${API}/products`);
+      console.log("Produtos carregados:", response.data); // Log para debug
       setProducts(response.data);
       setFilteredProducts(response.data);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
-      toast.error('Erro ao carregar produtos');
+      toast.error('Erro ao carregar cardápio');
     }
   };
 
   const handleAddToCart = (product) => {
     addToCart(product);
-    toast.success(`${product.name} adicionado ao carrinho!`);
+    toast.success(`${product.name} adicionado!`);
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="mb-12"
-        >
-          <h1 className="font-heading text-4xl md:text-5xl font-bold text-brand-brown mb-4" data-testid="catalog-heading">
-            Nosso Catálogo
-          </h1>
-          <p className="text-lg text-brand-brown/70">
-            Explore nossa seleção completa de bolos e doces artesanais.
-          </p>
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mb-12 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-pink-900 mb-4">Nosso Cardápio</h1>
+          <p className="text-lg text-gray-600">Delícias feitas com amor para você.</p>
         </motion.div>
 
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="text-brand-brown" size={20} />
-            <span className="font-semibold text-brand-brown">Filtrar por categoria:</span>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-2.5 rounded-full font-medium transition-all transform active:scale-95 ${
-                  selectedCategory === category
-                    ? 'bg-brand-brown text-white shadow-md'
-                    : 'bg-white text-brand-brown border border-brand-pink hover:bg-brand-pink/30'
-                }`}
-                data-testid={`filter-${category.toLowerCase().replace(/ /g, '-')}`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
+        {/* Filtros */}
+        <div className="flex flex-wrap justify-center gap-3 mb-10">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-6 py-2 rounded-full font-bold transition-all ${
+                selectedCategory === category
+                  ? 'bg-pink-600 text-white shadow-lg scale-105'
+                  : 'bg-white text-gray-600 border hover:bg-pink-50'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
+        {/* Grade de Produtos */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProducts.map((product, index) => (
             <motion.div
-              key={product.id}
+              key={product.id || index} // Fallback se não tiver ID
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: index * 0.05 }}
-              whileHover={{ y: -8 }}
-              className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow border border-brand-pink/20"
-              data-testid={`product-card-${index}`}
+              className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all border border-pink-100 flex flex-col"
             >
-              <Link to={`/produto/${product.id}`}>
-                <div className="aspect-square overflow-hidden">
-                  <img
-                    src={product.image_url || 'https://images.unsplash.com/photo-1621868402792-a5c9fa6866a3?crop=entropy&cs=srgb&fm=jpg&q=85'}
-                    alt={product.name}
-                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
+              <Link to={`/produto/${product.id}`} className="block h-64 overflow-hidden relative group">
+                {product.image_url ? (
+                   <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                ) : (
+                   <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">Sem Imagem</div>
+                )}
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all" />
               </Link>
-              <div className="p-6">
+              
+              <div className="p-6 flex-1 flex flex-col">
                 <Link to={`/produto/${product.id}`}>
-                  <h3 className="font-heading text-2xl font-bold text-brand-brown mb-2 hover:text-brand-rose transition-colors">
-                    {product.name}
-                  </h3>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2 hover:text-pink-600">{product.name}</h3>
                 </Link>
-                {product.size && (
-                  <p className="text-sm text-brand-brown/60 mb-1">Tamanho: {product.size}</p>
-                )}
-                {product.servings && (
-                  <p className="text-sm text-brand-brown/60 mb-3">{product.servings}</p>
-                )}
-                <p className="text-brand-brown/70 text-sm mb-4 line-clamp-2">
-                  {product.description}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-2xl text-brand-rose">
-                    R$ {product.price.toFixed(2)}
-                  </span>
-                  {product.category === 'Bolos Redondos' || product.category === 'Bolos Retangulares' ? (
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">{product.description}</p>
+                
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <span className="text-2xl font-bold text-pink-600">R$ {product.price.toFixed(2)}</span>
+                  
+                  {/* Se for Bolo, mostra Personalizar. Se for outro, Adicionar direto */}
+                  {product.category === 'Bolos' ? (
                     <Link
                       to={`/produto/${product.id}`}
-                      className="bg-brand-brown text-white px-6 py-2.5 rounded-full hover:bg-brand-brown/90 transition-all transform active:scale-95 flex items-center gap-2"
-                      data-testid={`add-to-cart-${index}`}
+                      className="bg-pink-600 text-white px-5 py-2 rounded-full font-bold hover:bg-pink-700 flex items-center gap-2 text-sm"
                     >
-                      <ShoppingBag size={18} />
-                      Personalizar
+                      <Filter size={16} /> Personalizar
                     </Link>
                   ) : (
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="bg-brand-brown text-white px-6 py-2.5 rounded-full hover:bg-brand-brown/90 transition-all transform active:scale-95 flex items-center gap-2"
-                      data-testid={`add-to-cart-${index}`}
+                      className="bg-green-600 text-white px-5 py-2 rounded-full font-bold hover:bg-green-700 flex items-center gap-2 text-sm"
                     >
-                      <ShoppingBag size={18} />
-                      Adicionar
+                      <ShoppingBag size={16} /> Adicionar
                     </button>
                   )}
                 </div>
@@ -157,10 +126,8 @@ const CatalogPage = () => {
         </motion.div>
 
         {filteredProducts.length === 0 && (
-          <div className="text-center py-20" data-testid="no-products-message">
-            <p className="text-xl text-brand-brown/60">
-              Nenhum produto encontrado nesta categoria.
-            </p>
+          <div className="text-center py-20">
+            <p className="text-xl text-gray-400">Nenhum produto encontrado nesta categoria.</p>
           </div>
         )}
       </div>
