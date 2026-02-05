@@ -111,12 +111,11 @@ async def admin_login(login: AdminLogin):
         return {"access_token": token, "token_type": "bearer"}
     raise HTTPException(status_code=401, detail="Senha incorreta")
 
-# CONFIGURAÇÕES (TAXAS, MASSAS, RECHEIOS)
+# CONFIGURAÇÕES
 @api_router.get("/settings")
 async def get_settings():
     settings = await db.settings.find_one({"id": "app_settings"}, {"_id": 0})
     if not settings:
-        # Cria padrão se não existir
         default = Settings()
         await db.settings.insert_one(default.model_dump())
         return default
@@ -132,6 +131,15 @@ async def update_settings(settings: Settings, token: dict = Depends(verify_token
 @api_router.get("/products")
 async def get_products():
     return await db.products.find({}, {"_id": 0}).to_list(1000)
+
+# --- AQUI ESTAVA FALTANDO ESSA ROTA! ---
+@api_router.get("/products/{product_id}")
+async def get_product(product_id: str):
+    product = await db.products.find_one({"id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    return product
+# ---------------------------------------
 
 @api_router.post("/products")
 async def create_product(product: ProductCreate, token: dict = Depends(verify_token)):
