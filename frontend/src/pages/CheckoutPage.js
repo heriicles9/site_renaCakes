@@ -201,8 +201,8 @@ const CheckoutPage = () => {
                         <h3 className="font-semibold text-brand-brown">{item.name}</h3>
                         {item.customization && (
                           <div className="mt-2 text-sm text-brand-brown/70 bg-brand-pink/20 p-2 rounded">
-                            <p><strong>Massa:</strong> {item.customization.massa}</p>
-                            <p><strong>Recheio:</strong> {item.customization.recheio}</p>
+                            <p><strong>Massas:</strong> {Array.isArray(item.customization.massas) ? item.customization.massas.join(', ') : item.customization.massa || 'N/A'}</p>
+                            <p><strong>Recheios:</strong> {Array.isArray(item.customization.recheios) ? item.customization.recheios.join(', ') : item.customization.recheio || 'N/A'}</p>
                             <p><strong>Cobertura:</strong> {item.customization.cobertura}</p>
                             {item.customization.observacoes && (
                               <p><strong>Obs:</strong> {item.customization.observacoes}</p>
