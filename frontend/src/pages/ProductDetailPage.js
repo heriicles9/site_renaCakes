@@ -21,7 +21,42 @@ const ProductDetailPage = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [quantity, setQuantity] = useState(1);
 
-  // Estados de Opções (Vindos do Admin)
+  // --- LISTAS PADRÃO COMPLETAS (BACKUP SE O ADMIN ESTIVER VAZIO) ---
+  const defaultMassas = [
+    { name: 'Tradicional', price: 0 },
+    { name: 'Baunilha', price: 0 },
+    { name: 'Chocolate', price: 0 },
+    { name: 'Coco', price: 0 },
+    { name: 'Amendoim', price: 22 },
+    { name: 'Red Velvet', price: 32 },
+    { name: 'Nozes', price: 38 },
+    { name: 'Black', price: 42 },
+  ];
+
+  const defaultRecheios = [
+    { name: 'Chocolate Belga', price: 0 },
+    { name: 'Quatro Leites', price: 0 },
+    { name: 'Brigadeiro Branco', price: 0 },
+    { name: 'Beijinho', price: 0 },
+    { name: 'Limão Siciliano', price: 0 },
+    { name: 'Mousse de Maracujá', price: 0 },
+    { name: 'Ameixa', price: 0 },
+    { name: 'Pistache', price: 0 },
+    { name: 'Doce de Leite', price: 0 },
+    { name: 'Abacaxi c/ Coco', price: 22 },
+    { name: 'Mousse Flocado', price: 28 },
+    { name: 'Amêndoas', price: 32 },
+    { name: 'Bombom', price: 32 },
+    { name: 'Geleia Frutas Amarelas', price: 38 },
+    { name: 'Cereja', price: 38 },
+    { name: 'Nozes', price: 38 },
+    { name: 'Damasco', price: 38 },
+    { name: 'Geleia Frutas Vermelhas', price: 42 },
+    { name: 'Geleia Morango Fresco', price: 42 },
+    { name: 'Nutella', price: 42 },
+  ];
+
+  // Estados de Opções
   const [massasOptions, setMassasOptions] = useState([]);
   const [recheiosOptions, setRecheiosOptions] = useState([]);
 
@@ -47,6 +82,7 @@ const ProductDetailPage = () => {
     const loadPageData = async () => {
       setLoading(true);
       try {
+        // Busca Produto e Configurações
         const [prodRes, settingsRes] = await Promise.all([
           axios.get(`${API}/products/${id}`),
           axios.get(`${API}/settings`)
@@ -55,20 +91,20 @@ const ProductDetailPage = () => {
         const prod = prodRes.data;
         setProduct(prod);
         
-        // 1. Carrega opções do Admin
+        // 1. Tenta carregar do Admin. Se estiver vazio, usa a LISTA COMPLETA PADRÃO.
         if (settingsRes.data.massas_options && settingsRes.data.massas_options.length > 0) {
           setMassasOptions(settingsRes.data.massas_options);
         } else {
-          setMassasOptions([{ name: 'Baunilha', price: 0 }, { name: 'Chocolate', price: 0 }]);
+          setMassasOptions(defaultMassas);
         }
 
         if (settingsRes.data.recheios_options && settingsRes.data.recheios_options.length > 0) {
           setRecheiosOptions(settingsRes.data.recheios_options);
         } else {
-          setRecheiosOptions([{ name: 'Brigadeiro', price: 0 }, { name: 'Ninho', price: 0 }]);
+          setRecheiosOptions(defaultRecheios);
         }
 
-        // 2. NOVA REGRA DE LIMITE (20cm para cima = 2 sabores)
+        // 2. REGRA DE LIMITE (20cm para cima = 2 sabores)
         const name = prod.name.toLowerCase();
         
         if (
@@ -201,7 +237,7 @@ const ProductDetailPage = () => {
                         return (
                             <button key={m.name} onClick={() => handleToggleOption(m, selectedMassas, setSelectedMassas)} className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[90px] ${isSelected ? 'border-[#4A3B32] bg-[#4A3B32] text-white shadow-lg scale-95' : 'border-gray-100 bg-white text-gray-700 hover:border-pink-200 hover:bg-pink-50'}`}>
                                 {isSelected && <div className="absolute top-2 right-2"><CheckCircle size={16} /></div>}
-                                <span className="font-bold">{m.name}</span>
+                                <span className="font-bold text-center">{m.name}</span>
                                 {m.price > 0 && <span className={`text-xs mt-1 px-2 rounded-full font-bold ${isSelected ? 'bg-pink-500' : 'bg-pink-100 text-pink-700'}`}>+ R$ {m.price.toFixed(2)}</span>}
                             </button>
                         );
@@ -221,7 +257,7 @@ const ProductDetailPage = () => {
                         return (
                             <button key={r.name} onClick={() => handleToggleOption(r, selectedRecheios, setSelectedRecheios)} className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[90px] ${isSelected ? 'border-[#D48D92] bg-[#D48D92] text-white shadow-lg scale-95' : 'border-gray-100 bg-white text-gray-700 hover:border-pink-200 hover:bg-pink-50'}`}>
                                 {isSelected && <div className="absolute top-2 right-2"><CheckCircle size={16} /></div>}
-                                <span className="font-bold">{r.name}</span>
+                                <span className="font-bold text-center">{r.name}</span>
                                 {r.price > 0 && <span className={`text-xs mt-1 px-2 rounded-full font-bold ${isSelected ? 'bg-white text-[#D48D92]' : 'bg-pink-100 text-pink-700'}`}>+ R$ {r.price.toFixed(2)}</span>}
                             </button>
                         );
