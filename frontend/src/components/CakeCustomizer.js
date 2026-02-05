@@ -271,10 +271,10 @@ const CakeCustomizer = ({ product, onCustomizationChange }) => {
           />
         </div>
 
-        {!customization.massa || !customization.recheio ? (
+        {!(customization.massas && customization.massas.length > 0) || !(customization.recheios && customization.recheios.length > 0) ? (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-yellow-800 text-sm font-medium">
-              ⚠️ Por favor, selecione uma massa e um recheio para continuar
+              ⚠️ Por favor, selecione pelo menos uma massa e um recheio para continuar
             </p>
           </div>
         ) : (
@@ -282,6 +282,11 @@ const CakeCustomizer = ({ product, onCustomizationChange }) => {
             <p className="text-green-800 text-sm font-medium">
               ✓ Seu bolo personalizado está pronto!
             </p>
+            <div className="mt-2 text-sm text-green-700">
+              <p><strong>Massas:</strong> {customization.massas.join(', ')}</p>
+              <p><strong>Recheios:</strong> {customization.recheios.join(', ')}</p>
+              <p><strong>Cobertura:</strong> {customization.cobertura}</p>
+            </div>
           </div>
         )}
       </div>
