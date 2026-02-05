@@ -17,8 +17,8 @@ const CatalogPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const { addToCart } = useCart();
 
-  // Categorias para o filtro (devem bater com o que você usa no Admin)
-  const categories = ['Todos', 'Bolos', 'Doces', 'Salgados'];
+  // --- NOVAS CATEGORIAS (IGUAL FOTO 2) ---
+  const categories = ['Todos', 'Bolos Redondos', 'Bolos Retangulares', 'Doces', 'Kits'];
 
   useEffect(() => {
     fetchProducts();
@@ -28,11 +28,8 @@ const CatalogPage = () => {
     if (selectedCategory === 'Todos') {
       setFilteredProducts(products);
     } else {
-      // Filtra se a categoria for exata OU se o produto contiver o nome da categoria
-      // Ex: Se filtro for 'Bolos', mostra 'Bolos Redondos' também
-      setFilteredProducts(products.filter((p) => 
-        p.category === selectedCategory || p.category.includes(selectedCategory)
-      ));
+      // Filtra exatamente pelo nome da categoria
+      setFilteredProducts(products.filter((p) => p.category === selectedCategory));
     }
   }, [selectedCategory, products]);
 
@@ -52,14 +49,9 @@ const CatalogPage = () => {
     toast.success(`${product.name} adicionado!`);
   };
 
-  // Função inteligente para decidir se é Bolo (Personalizável)
+  // Verifica se é personalizável (Qualquer coisa com "Bolo" no nome entra aqui)
   const isCustomizable = (category) => {
-    return category && (
-      category.includes('Bolo') || 
-      category.includes('Tortas') ||
-      category === 'Bolos Redondos' || 
-      category === 'Bolos Retangulares'
-    );
+    return category && (category.includes('Bolo') || category.includes('Tortas'));
   };
 
   return (
@@ -67,29 +59,41 @@ const CatalogPage = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mb-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-pink-900 mb-4">Nosso Cardápio</h1>
-          <p className="text-lg text-gray-600">Delícias feitas com amor para você.</p>
+        {/* CABEÇALHO IGUAL FOTO 2 */}
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mb-10">
+          <h1 className="font-serif text-4xl md:text-5xl font-bold text-[#4A3B32] mb-3">
+            Nosso Catálogo
+          </h1>
+          <p className="text-lg text-gray-500 font-light">
+            Explore nossa seleção completa de bolos e doces artesanais.
+          </p>
         </motion.div>
 
-        {/* Filtros */}
-        <div className="flex flex-wrap justify-center gap-3 mb-10">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-6 py-2 rounded-full font-bold transition-all ${
-                selectedCategory === category
-                  ? 'bg-pink-600 text-white shadow-lg scale-105'
-                  : 'bg-white text-gray-600 border hover:bg-pink-50'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+        {/* FILTROS COM ÍCONE */}
+        <div className="mb-10">
+          <div className="flex items-center gap-2 mb-4 text-[#4A3B32] font-medium">
+             <Filter size={20} />
+             <span>Filtrar por categoria:</span>
+          </div>
+          
+          <div className="flex flex-wrap gap-3">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-6 py-2.5 rounded-full font-bold transition-all text-sm md:text-base ${
+                  selectedCategory === category
+                    ? 'bg-[#4A3B32] text-white shadow-lg'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:border-[#D48D92] hover:text-[#D48D92]'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Grade de Produtos */}
+        {/* GRADE DE PRODUTOS */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProducts.map((product, index) => (
             <motion.div
@@ -97,38 +101,42 @@ const CatalogPage = () => {
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all border border-pink-100 flex flex-col"
+              className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 flex flex-col group"
             >
-              <Link to={`/produto/${product.id}`} className="block h-64 overflow-hidden relative group">
+              <Link to={`/produto/${product.id}`} className="block h-64 overflow-hidden relative">
                 {product.image_url ? (
-                   <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                   <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 ) : (
-                   <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">Sem Imagem</div>
+                   <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sem Imagem</div>
                 )}
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all" />
+                {/* Overlay suave ao passar o mouse */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
               </Link>
               
               <div className="p-6 flex-1 flex flex-col">
                 <Link to={`/produto/${product.id}`}>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2 hover:text-pink-600">{product.name}</h3>
+                  <h3 className="font-serif text-2xl font-bold text-[#4A3B32] mb-2 group-hover:text-[#D48D92] transition-colors">
+                    {product.name}
+                  </h3>
                 </Link>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">{product.description}</p>
+                <p className="text-gray-500 text-sm mb-4 line-clamp-2 flex-1 font-light">
+                    {product.description}
+                </p>
                 
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                  <span className="text-2xl font-bold text-pink-600">R$ {product.price.toFixed(2)}</span>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
+                  <span className="text-2xl font-bold text-[#D48D92]">R$ {product.price.toFixed(2)}</span>
                   
-                  {/* LÓGICA CORRIGIDA AQUI */}
                   {isCustomizable(product.category) ? (
                     <Link
                       to={`/produto/${product.id}`}
-                      className="bg-pink-900 text-white px-5 py-2 rounded-full font-bold hover:bg-pink-800 flex items-center gap-2 text-sm shadow-md"
+                      className="bg-[#4A3B32] text-white px-5 py-2.5 rounded-lg font-bold hover:bg-[#3A2B22] flex items-center gap-2 text-sm transition-all shadow-md hover:shadow-lg"
                     >
-                      <Filter size={16} /> Personalizar
+                      <ShoppingBag size={16} /> Personalizar
                     </Link>
                   ) : (
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="bg-green-600 text-white px-5 py-2 rounded-full font-bold hover:bg-green-700 flex items-center gap-2 text-sm shadow-md"
+                      className="bg-green-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-green-700 flex items-center gap-2 text-sm transition-all shadow-md hover:shadow-lg"
                     >
                       <ShoppingBag size={16} /> Adicionar
                     </button>
@@ -140,8 +148,11 @@ const CatalogPage = () => {
         </motion.div>
 
         {filteredProducts.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-xl text-gray-400">Nenhum produto encontrado nesta categoria.</p>
+          <div className="text-center py-20 bg-white rounded-3xl border border-gray-100">
+            <p className="text-xl text-gray-400 font-light">Nenhum produto encontrado na categoria <strong>{selectedCategory}</strong>.</p>
+            <button onClick={() => setSelectedCategory('Todos')} className="mt-4 text-[#D48D92] font-bold hover:underline">
+                Ver todos os produtos
+            </button>
           </div>
         )}
       </div>
