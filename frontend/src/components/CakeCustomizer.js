@@ -4,11 +4,26 @@ import { motion } from 'framer-motion';
 
 const CakeCustomizer = ({ product, onCustomizationChange }) => {
   const [customization, setCustomization] = useState({
-    massa: '',
-    recheio: '',
+    massas: [],
+    recheios: [],
     cobertura: 'Chantilly',
     observacoes: ''
   });
+
+  // Determinar limites baseado no tamanho do bolo
+  const getMaxSelections = () => {
+    const size = product.size || '';
+    const sizeNum = parseInt(size);
+    
+    // 10cm e 15cm: apenas 1 massa e 1 recheio
+    if (sizeNum === 10 || sizeNum === 15) {
+      return { massas: 1, recheios: 1 };
+    }
+    // 20cm ou mais: até 2 massas e 2 recheios
+    return { massas: 2, recheios: 2 };
+  };
+
+  const maxSelections = getMaxSelections();
 
   const massasDisponiveis = [
     { nome: 'Tradicional', preco: 0 },
