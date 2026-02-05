@@ -15,10 +15,10 @@ const CakeCustomizer = ({ product, onCustomizationChange }) => {
     { nome: 'Baunilha', preco: 0 },
     { nome: 'Chocolate', preco: 0 },
     { nome: 'Coco', preco: 0 },
-    { nome: 'Red Velvet', preco: 10, especial: true },
-    { nome: 'Black', preco: 10, especial: true },
-    { nome: 'Nozes', preco: 15, especial: true },
-    { nome: 'Amendoim', preco: 10, especial: true }
+    { nome: 'Red Velvet', preco: 32, especial: true },
+    { nome: 'Black', preco: 42, especial: true },
+    { nome: 'Nozes', preco: 38, especial: true },
+    { nome: 'Amendoim', preco: 22, especial: true }
   ];
 
   const recheiosDisponiveis = [
@@ -27,18 +27,21 @@ const CakeCustomizer = ({ product, onCustomizationChange }) => {
     { nome: 'Brigadeiro Branco', preco: 0 },
     { nome: 'Beijinho', preco: 0 },
     { nome: 'Limão Siciliano', preco: 0 },
-    { nome: 'Mousse Flocado', preco: 5 },
-    { nome: 'Mousse de Maracujá', preco: 5 },
+    { nome: 'Mousse Flocado', preco: 28, especial: true },
+    { nome: 'Mousse de Maracujá', preco: 0 },
     { nome: 'Doce de Leite', preco: 0 },
     { nome: 'Ameixa', preco: 0 },
-    { nome: 'Nozes', preco: 15, especial: true },
-    { nome: 'Damasco', preco: 12, especial: true },
-    { nome: 'Pistache', preco: 20, especial: true },
-    { nome: 'Amêndoas', preco: 15, especial: true },
-    { nome: 'Geleia Frutas Vermelhas', preco: 8, especial: true },
-    { nome: 'Geleia Morango Fresco', preco: 10, especial: true },
-    { nome: 'Nutella', preco: 25, especial: true },
-    { nome: 'Abacaxi c/ Coco', preco: 8 }
+    { nome: 'Nozes', preco: 38, especial: true },
+    { nome: 'Damasco', preco: 38, especial: true },
+    { nome: 'Pistache', preco: 0 },
+    { nome: 'Amêndoas', preco: 32, especial: true },
+    { nome: 'Geleia Frutas Vermelhas', preco: 42, especial: true },
+    { nome: 'Geleia Morango Fresco', preco: 42, especial: true },
+    { nome: 'Geleia Frutas Amarelas', preco: 38, especial: true },
+    { nome: 'Bombom', preco: 32, especial: true },
+    { nome: 'Cereja', preco: 38, especial: true },
+    { nome: 'Nutella', preco: 42, especial: true },
+    { nome: 'Abacaxi c/ Coco', preco: 22, especial: true }
   ];
 
   const coberturasDisponiveis = [
