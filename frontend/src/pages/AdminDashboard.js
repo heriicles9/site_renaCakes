@@ -62,6 +62,84 @@ const AdminDashboard = () => {
     window.location.href = '/admin';
   };
 
+  // --- FUNÇÃO DE IMPRESSÃO (NOVA) ---
+  const handlePrintOrder = (order) => {
+    const printWindow = window.open('', '', 'width=400,height=600');
+    
+    const itemsHtml = order.items.map(item => `
+      <div class="item">
+        <div class="item-header">
+          <span class="qty">${item.quantity}x</span>
+          <span class="name">${item.name}</span>
+        </div>
+        ${item.customization ? `
+          <div class="customization">
+            ${item.customization.massa ? `<div>Massa: <strong>${item.customization.massa}</strong></div>` : ''}
+            ${item.customization.recheio ? `<div>Recheio: <strong>${item.customization.recheio}</strong></div>` : ''}
+            ${item.customization.cobertura ? `<div>Cob: ${item.customization.cobertura}</div>` : ''}
+            ${item.customization.observacoes ? `<div class="obs">⚠️ ${item.customization.observacoes}</div>` : ''}
+          </div>
+        ` : ''}
+      </div>
+    `).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Pedido #${order.id.slice(0,6)}</title>
+          <style>
+            body { font-family: 'Courier New', monospace; padding: 20px; max-width: 320px; margin: 0 auto; color: #000; }
+            .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 15px; }
+            .brand { font-size: 1.2em; font-weight: bold; text-transform: uppercase; }
+            .meta { font-size: 0.9em; margin-top: 5px; }
+            .customer { border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 15px; font-size: 0.95em; }
+            .label { font-weight: bold; }
+            .item { margin-bottom: 12px; border-bottom: 1px dotted #ccc; padding-bottom: 5px; }
+            .item-header { font-size: 1.1em; font-weight: bold; }
+            .customization { font-size: 0.85em; margin-left: 10px; margin-top: 2px; line-height: 1.4; }
+            .obs { font-weight: bold; margin-top: 2px; text-decoration: underline; }
+            .totals { margin-top: 20px; border-top: 2px dashed #000; pt: 10px; text-align: right; font-size: 1.1em; }
+            .footer { text-align: center; margin-top: 30px; font-size: 0.8em; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="brand">RENAILDES CAKES</div>
+            <div class="meta">Pedido #${order.id.slice(0,6).toUpperCase()}</div>
+            <div class="meta">${new Date(order.created_at).toLocaleDateString('pt-BR')} - ${new Date(order.created_at).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</div>
+          </div>
+
+          <div class="customer">
+            <div><span class="label">Cliente:</span> ${order.customer_name}</div>
+            <div><span class="label">Tel:</span> ${order.customer_phone}</div>
+            ${order.customer_address ? `<div><span class="label">End:</span> ${order.customer_address}</div>` : ''}
+            <div><span class="label">Pagto:</span> ${order.payment_method}</div>
+          </div>
+
+          <div class="items">
+            ${itemsHtml}
+          </div>
+
+          <div class="totals">
+            ${order.delivery_fee > 0 ? `<div>Taxa: R$ ${order.delivery_fee.toFixed(2)}</div>` : ''}
+            <div><strong>TOTAL: R$ ${order.total.toFixed(2)}</strong></div>
+          </div>
+
+          <div class="footer">
+            --- Fim do Pedido ---
+          </div>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
   // --- ACTIONS PEDIDOS E PRODUTOS ---
   const handleStatusChange = async (id, status) => {
     await axios.patch(`${API}/orders/${id}/status?status=${status}`, {}, getHeaders());
@@ -163,11 +241,24 @@ const AdminDashboard = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-3xl font-bold text-pink-700">R$ {order.total.toFixed(2)}</p>
-                    <div className="mt-4 flex gap-2 justify-end">
-                      <select value={order.status} onChange={(e) => handleStatusChange(order.id, e.target.value)} className="border rounded p-2 text-sm font-bold bg-gray-50">
+                    
+                    {/* BOTÕES DE AÇÃO */}
+                    <div className="mt-4 flex gap-2 justify-end items-center flex-wrap">
+                      
+                      {/* BOTÃO DE IMPRIMIR (NOVO) */}
+                      <button 
+                        onClick={() => handlePrintOrder(order)} 
+                        className="bg-gray-800 text-white px-3 py-2 rounded hover:bg-black transition-colors flex items-center gap-1"
+                        title="Imprimir Comanda"
+                      >
+                        🖨️ <span className="text-xs font-bold hidden md:inline">Imprimir</span>
+                      </button>
+
+                      <select value={order.status} onChange={(e) => handleStatusChange(order.id, e.target.value)} className="border rounded p-2 text-sm font-bold bg-gray-50 cursor-pointer outline-none">
                         <option>Pendente</option><option>Em preparo</option><option>Feito</option>
                       </select>
-                      <button onClick={() => handleDeleteOrder(order.id)} className="text-red-400 p-2 border rounded hover:bg-red-50">🗑️</button>
+                      
+                      <button onClick={() => handleDeleteOrder(order.id)} className="text-red-400 p-2 border rounded hover:bg-red-50" title="Excluir">🗑️</button>
                     </div>
                   </div>
                 </div>
@@ -223,16 +314,13 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* --- CONFIGURAÇÕES (LIMPO) --- */}
+        {/* --- CONFIGURAÇÕES --- */}
         {view === 'settings' && (
           <div className="max-w-xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100">
             <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">⚙️ Configurações Gerais</h2>
             <form onSubmit={handleSaveSettings} className="space-y-6">
-              
-              {/* PAGAMENTOS */}
               <div>
                 <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">💰 Taxas e Contato</h3>
-                
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Taxa Entrega (R$)</label>
@@ -248,13 +336,9 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
-
               <div className="pt-4 border-t">
-                <button type="submit" className="w-full py-4 bg-pink-600 text-white rounded-xl font-bold hover:bg-pink-700 shadow-md text-lg">
-                  💾 Salvar Configurações
-                </button>
+                <button type="submit" className="w-full py-4 bg-pink-600 text-white rounded-xl font-bold hover:bg-pink-700 shadow-md text-lg">💾 Salvar Configurações</button>
               </div>
-
             </form>
           </div>
         )}
