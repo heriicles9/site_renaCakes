@@ -21,7 +21,7 @@ const ProductDetailPage = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [quantity, setQuantity] = useState(1);
 
-  // --- LISTAS DE BOLOS (PADRÃO) ---
+  // --- LISTAS DE BOLOS ---
   const defaultMassas = [
     { name: 'Tradicional', price: 0 }, { name: 'Baunilha', price: 0 },
     { name: 'Chocolate', price: 0 }, { name: 'Coco', price: 0 },
@@ -48,7 +48,7 @@ const ProductDetailPage = () => {
     { name: 'Pasta Americana', price: 0 },
   ];
 
-  // --- LISTAS DE DOCES (NOVAS) ---
+  // --- LISTAS DE DOCES ---
   const docesComuns = [
     'Brigadeiro Preto', 'Beijinho', 'Cajuzinho', 'Limãozinho', 
     'Brigadeiro Branco', 'Brigadeiro com Flocos', 
@@ -83,6 +83,7 @@ const ProductDetailPage = () => {
   const [isDoce, setIsDoce] = useState(false);
   const [docesOptions, setDocesOptions] = useState([]);
 
+  // --- CARREGAMENTO INICIAL ---
   useEffect(() => {
     const loadPageData = async () => {
       setLoading(true);
@@ -98,21 +99,21 @@ const ProductDetailPage = () => {
         const category = prod.category || '';
         const nameLower = prod.name.toLowerCase();
 
-        // LÓGICA PARA DOCES
+        // É DOCE?
         if (category === 'Doces' || nameLower.includes('doce') || nameLower.includes('cento')) {
           setIsDoce(true);
-          setQuantity(50); // Mínimo de 50 unidades
+          setQuantity(50); // Começa com 50 unidades (mínimo)
           
           if (nameLower.includes('fino')) setDocesOptions(docesFinos);
           else if (nameLower.includes('gourmet')) setDocesOptions(docesGourmet);
           else setDocesOptions(docesComuns);
 
-          setMaxSelections(4); // Limite atualizado para 4 sabores
+          // O limite de sabores será definido pelo useEffect de quantity abaixo
         
-        // LÓGICA PARA BOLOS
+        // É BOLO?
         } else {
           setIsDoce(false);
-          setQuantity(1); // Mínimo de 1 bolo
+          setQuantity(1);
           
           if (settingsRes.data.massas_options?.length > 0) setMassasOptions(settingsRes.data.massas_options);
           else setMassasOptions(defaultMassas);
@@ -120,6 +121,7 @@ const ProductDetailPage = () => {
           if (settingsRes.data.recheios_options?.length > 0) setRecheiosOptions(settingsRes.data.recheios_options);
           else setRecheiosOptions(defaultRecheios);
 
+          // Regra de tamanho do bolo
           if (nameLower.includes('20cm') || nameLower.includes('25cm') || nameLower.includes('30cm') || nameLower.includes('35cm') || nameLower.includes('40cm')) {
             setMaxSelections(2);
           } else {
@@ -137,9 +139,26 @@ const ProductDetailPage = () => {
     if (id) loadPageData();
   }, [id]);
 
+  // --- REGRA DINÂMICA DE SABORES PARA DOCES ---
+  useEffect(() => {
+    if (isDoce) {
+      if (quantity === 50) {
+        setMaxSelections(2); // 50 unidades = 2 sabores (25 cada)
+        // Se o usuário diminuiu para 50 mas tinha 4 selecionados, limpamos o excesso visualmente ou avisamos na validação
+      } else {
+        setMaxSelections(4); // 100+ unidades = 4 sabores (25 cada)
+      }
+    }
+  }, [quantity, isDoce]);
+
   const isCustomizable = product && (product.category.includes('Bolo') || product.category.includes('Tortas') || product.category === 'Doces');
   
-  const isFormValid = !isCustomizable || (isDoce ? selectedDoces.length > 0 : (selectedMassas.length > 0 && selectedRecheios.length > 0));
+  // Validação (Impede adicionar se escolheu mais sabores do que o permitido pela quantidade)
+  const isFormValid = !isCustomizable || (
+    isDoce 
+      ? (selectedDoces.length > 0 && selectedDoces.length <= maxSelections) 
+      : (selectedMassas.length > 0 && selectedRecheios.length > 0)
+  );
 
   const handleToggleOption = (item, currentList, setList, isPriceObj = true) => {
     const itemName = isPriceObj ? item.name : item;
@@ -154,7 +173,7 @@ const ProductDetailPage = () => {
         if (currentList.length < maxSelections) {
           setList([...currentList, item]);
         } else {
-          toast.warning(`Máximo de ${maxSelections} opções.`);
+          toast.warning(`Para ${quantity} unidades, o limite é ${maxSelections} sabores.`);
         }
       }
     }
@@ -164,12 +183,9 @@ const ProductDetailPage = () => {
     if (!product) return 0;
     
     if (isDoce) {
-      // Cálculo para Doces: Preço Base é o Cento (100un). 
-      // Se quantidade for 50, é metade do preço.
       const pricePerUnit = product.price / 100;
       return pricePerUnit * quantity;
     } else {
-      // Cálculo para Bolos
       let total = product.price;
       selectedMassas.forEach(m => total += m.price);
       selectedRecheios.forEach(r => total += r.price);
@@ -180,11 +196,9 @@ const ProductDetailPage = () => {
 
   const updateQuantity = (change) => {
     if (isDoce) {
-      // Para doces, pula de 50 em 50 (Mínimo 50)
       const newQty = quantity + (change * 50);
       setQuantity(Math.max(50, newQty));
     } else {
-      // Para bolos, pula de 1 em 1 (Mínimo 1)
       const newQty = quantity + change;
       setQuantity(Math.max(1, newQty));
     }
@@ -192,16 +206,18 @@ const ProductDetailPage = () => {
 
   const handleAddToCart = () => {
     if (!product) return;
+    
+    if (isDoce && selectedDoces.length > maxSelections) {
+      toast.error(`Você escolheu ${selectedDoces.length} sabores, mas para 50 doces o limite é 2!`);
+      return;
+    }
+
     if (!isFormValid) {
       toast.error(isDoce ? 'Escolha pelo menos 1 sabor!' : 'Selecione massa e recheio!');
       return;
     }
 
     const totalCalculated = calculateTotal();
-    
-    // Se for Doce, criamos um item especial no carrinho com a quantidade já no nome
-    // Ex: "Cento de Doces (50 un)"
-    // E o preço final já calculado para aquela quantidade
     
     const itemToAdd = {
       ...product,
@@ -216,7 +232,6 @@ const ProductDetailPage = () => {
       } : null
     };
 
-    // Para doces, adicionamos "1 pacote" de 50/100/150 unidades
     addToCart(itemToAdd, isDoce ? 1 : quantity);
     
     toast.success(isDoce ? `${quantity} doces adicionados!` : `${quantity}x ${product.name} adicionado!`);
@@ -256,7 +271,6 @@ const ProductDetailPage = () => {
         {isCustomizable && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             
-            {/* --- LÓGICA DE BOLO --- */}
             {!isDoce && (
               <>
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
@@ -307,12 +321,17 @@ const ProductDetailPage = () => {
               </>
             )}
 
-            {/* --- LÓGICA DE DOCES --- */}
             {isDoce && (
               <section>
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
                     <span className="text-3xl">🍬</span>
-                    <div><h2 className="text-2xl font-serif font-bold text-[#4A3B32]">Escolha os Sabores</h2><p className="text-gray-500 text-sm">Selecione até <strong className="text-pink-600">{maxSelections}</strong> sabores para compor seu pedido.</p></div>
+                    <div>
+                      <h2 className="text-2xl font-serif font-bold text-[#4A3B32]">Escolha os Sabores</h2>
+                      <p className="text-gray-500 text-sm">
+                        Para <strong className="text-pink-600">{quantity} unidades</strong>, você pode escolher até <strong className="text-pink-600">{maxSelections}</strong> sabores.
+                        <br/><span className="text-xs text-gray-400">(Aproximadamente 25 unidades de cada sabor)</span>
+                      </p>
+                    </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {docesOptions.map((doceName) => {
@@ -328,7 +347,6 @@ const ProductDetailPage = () => {
               </section>
             )}
 
-            {/* OBSERVAÇÕES */}
             <section className="bg-yellow-50 border border-yellow-200 p-6 rounded-2xl">
                 <h3 className="text-lg font-bold text-yellow-800 mb-2 flex items-center gap-2"><Info size={20}/> Observações</h3>
                 <textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} placeholder="Ex: Metade de cada sabor, sem forminha..." className="w-full p-4 border border-gray-200 rounded-xl h-24 bg-white focus:outline-pink-300" />
@@ -336,20 +354,18 @@ const ProductDetailPage = () => {
           </motion.div>
         )}
 
-        {/* BARRA FIXA */}
         <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 shadow-2xl z-50">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="hidden md:block"><p className="text-xs text-gray-500 uppercase font-bold">Total Final</p><span className="text-3xl font-bold text-[#4A3B32]">R$ {calculateTotal().toFixed(2)}</span></div>
                 <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end ml-auto">
                     
-                    {/* CONTROLE DE QUANTIDADE INTELIGENTE */}
                     <div className="flex items-center bg-gray-100 rounded-full p-1">
                         <button onClick={() => updateQuantity(-1)} className="w-10 h-10 font-bold hover:bg-white rounded-full text-gray-600">-</button>
                         <span className="min-w-[40px] px-2 text-center font-bold text-lg">{quantity} {isDoce && <span className="text-xs font-normal">un</span>}</span>
                         <button onClick={() => updateQuantity(1)} className="w-10 h-10 font-bold hover:bg-white rounded-full text-gray-600">+</button>
                     </div>
 
-                    <button onClick={handleAddToCart} disabled={!isFormValid} className={`flex-1 md:flex-none px-8 py-3 rounded-full text-lg font-bold text-white shadow-lg flex items-center justify-center gap-3 ${isFormValid ? 'bg-[#4A3B32] hover:bg-[#3A2B22]' : 'bg-gray-300 cursor-not-allowed'}`}><ShoppingBag size={20} /> <span className="md:hidden">R$ {calculateTotal().toFixed(2)} • </span> <span>{isFormValid ? 'Adicionar' : 'Escolha Opções'}</span></button>
+                    <button onClick={handleAddToCart} disabled={!isFormValid && (!isDoce || selectedDoces.length <= maxSelections)} className={`flex-1 md:flex-none px-8 py-3 rounded-full text-lg font-bold text-white shadow-lg flex items-center justify-center gap-3 ${isFormValid && (!isDoce || selectedDoces.length <= maxSelections) ? 'bg-[#4A3B32] hover:bg-[#3A2B22]' : 'bg-gray-300 cursor-not-allowed'}`}><ShoppingBag size={20} /> <span className="md:hidden">R$ {calculateTotal().toFixed(2)} • </span> <span>{isFormValid ? 'Adicionar' : 'Escolha Opções'}</span></button>
                 </div>
             </div>
         </div>
