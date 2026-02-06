@@ -102,13 +102,11 @@ const ProductDetailPage = () => {
         // É DOCE?
         if (category === 'Doces' || nameLower.includes('doce') || nameLower.includes('cento')) {
           setIsDoce(true);
-          setQuantity(50); // Começa com 50 unidades (mínimo)
+          setQuantity(50);
           
           if (nameLower.includes('fino')) setDocesOptions(docesFinos);
           else if (nameLower.includes('gourmet')) setDocesOptions(docesGourmet);
           else setDocesOptions(docesComuns);
-
-          // O limite de sabores será definido pelo useEffect de quantity abaixo
         
         // É BOLO?
         } else {
@@ -121,11 +119,17 @@ const ProductDetailPage = () => {
           if (settingsRes.data.recheios_options?.length > 0) setRecheiosOptions(settingsRes.data.recheios_options);
           else setRecheiosOptions(defaultRecheios);
 
-          // Regra de tamanho do bolo
-          if (nameLower.includes('20cm') || nameLower.includes('25cm') || nameLower.includes('30cm') || nameLower.includes('35cm') || nameLower.includes('40cm')) {
-            setMaxSelections(2);
+          // REGRA DE TAMANHO DO BOLO (ATUALIZADA PARA RETANGULARES)
+          // Se tiver essas medidas OU a palavra "retangular", libera 2 sabores.
+          if (
+            nameLower.includes('20cm') || nameLower.includes('25cm') || nameLower.includes('30cm') || 
+            nameLower.includes('35cm') || nameLower.includes('40cm') || nameLower.includes('45cm') ||
+            nameLower.includes('50cm') || nameLower.includes('55cm') || nameLower.includes('75cm') ||
+            nameLower.includes('retangular')
+          ) {
+            setMaxSelections(2); // Grande (2 Massas / 2 Recheios)
           } else {
-            setMaxSelections(1);
+            setMaxSelections(1); // Pequeno (1 Massa / 1 Recheio)
           }
         }
 
@@ -143,17 +147,15 @@ const ProductDetailPage = () => {
   useEffect(() => {
     if (isDoce) {
       if (quantity === 50) {
-        setMaxSelections(2); // 50 unidades = 2 sabores (25 cada)
-        // Se o usuário diminuiu para 50 mas tinha 4 selecionados, limpamos o excesso visualmente ou avisamos na validação
+        setMaxSelections(2); 
       } else {
-        setMaxSelections(4); // 100+ unidades = 4 sabores (25 cada)
+        setMaxSelections(4);
       }
     }
   }, [quantity, isDoce]);
 
   const isCustomizable = product && (product.category.includes('Bolo') || product.category.includes('Tortas') || product.category === 'Doces');
   
-  // Validação (Impede adicionar se escolheu mais sabores do que o permitido pela quantidade)
   const isFormValid = !isCustomizable || (
     isDoce 
       ? (selectedDoces.length > 0 && selectedDoces.length <= maxSelections) 
@@ -173,7 +175,7 @@ const ProductDetailPage = () => {
         if (currentList.length < maxSelections) {
           setList([...currentList, item]);
         } else {
-          toast.warning(`Para ${quantity} unidades, o limite é ${maxSelections} sabores.`);
+          toast.warning(`Para este produto, o limite é ${maxSelections} sabores.`);
         }
       }
     }
@@ -208,7 +210,7 @@ const ProductDetailPage = () => {
     if (!product) return;
     
     if (isDoce && selectedDoces.length > maxSelections) {
-      toast.error(`Você escolheu ${selectedDoces.length} sabores, mas para 50 doces o limite é 2!`);
+      toast.error(`Limite de ${maxSelections} sabores excedido.`);
       return;
     }
 
@@ -262,7 +264,13 @@ const ProductDetailPage = () => {
                       <p className="text-sm text-gray-500 mb-1">{isDoce ? 'Valor do Cento (100un)' : 'Preço Base'}</p>
                       <p className="text-4xl font-bold text-[#D48D92]">R$ {product.price.toFixed(2)}</p>
                   </div>
-                  {isDoce && <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-green-800 font-bold text-sm h-fit mb-2">🍬 Mínimo de 50 unidades</div>}
+                  {isDoce ? (
+                     <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-green-800 font-bold text-sm h-fit mb-2">🍬 Mínimo de 50 unidades</div>
+                  ) : maxSelections > 1 ? (
+                     <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-green-800 font-bold text-sm h-fit mb-2">✨ Bolo Grande: Escolha até 2 sabores!</div>
+                  ) : (
+                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm h-fit mb-2">ℹ️ Escolha 1 sabor de cada</div>
+                  )}
                 </div>
             </div>
         </div>
