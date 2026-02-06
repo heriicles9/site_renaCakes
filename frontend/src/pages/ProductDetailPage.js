@@ -74,7 +74,7 @@ const ProductDetailPage = () => {
   // Seleções do Usuário
   const [selectedMassas, setSelectedMassas] = useState([]);
   const [selectedRecheios, setSelectedRecheios] = useState([]);
-  const [selectedDoces, setSelectedDoces] = useState([]); // Para doces
+  const [selectedDoces, setSelectedDoces] = useState([]); 
   const [selectedCobertura, setSelectedCobertura] = useState(coberturasOptions[0]);
   const [observacoes, setObservacoes] = useState('');
   
@@ -95,31 +95,31 @@ const ProductDetailPage = () => {
         const prod = prodRes.data;
         setProduct(prod);
         
-        // Verifica se é Doce ou Bolo
         const category = prod.category || '';
         const nameLower = prod.name.toLowerCase();
 
+        // LÓGICA PARA DOCES
         if (category === 'Doces' || nameLower.includes('doce') || nameLower.includes('cento')) {
           setIsDoce(true);
-          // Define qual lista de doces mostrar baseada no nome
-          if (nameLower.includes('fino')) {
-            setDocesOptions(docesFinos);
-          } else if (nameLower.includes('gourmet')) {
-            setDocesOptions(docesGourmet);
-          } else {
-            setDocesOptions(docesComuns);
-          }
-          setMaxSelections(5); // Geralmente num cento escolhe-se uns 4 ou 5 sabores
+          setQuantity(50); // Mínimo de 50 unidades
+          
+          if (nameLower.includes('fino')) setDocesOptions(docesFinos);
+          else if (nameLower.includes('gourmet')) setDocesOptions(docesGourmet);
+          else setDocesOptions(docesComuns);
+
+          setMaxSelections(4); // Limite atualizado para 4 sabores
+        
+        // LÓGICA PARA BOLOS
         } else {
           setIsDoce(false);
-          // Configuração de Bolos
+          setQuantity(1); // Mínimo de 1 bolo
+          
           if (settingsRes.data.massas_options?.length > 0) setMassasOptions(settingsRes.data.massas_options);
           else setMassasOptions(defaultMassas);
 
           if (settingsRes.data.recheios_options?.length > 0) setRecheiosOptions(settingsRes.data.recheios_options);
           else setRecheiosOptions(defaultRecheios);
 
-          // Regra de Tamanho do Bolo
           if (nameLower.includes('20cm') || nameLower.includes('25cm') || nameLower.includes('30cm') || nameLower.includes('35cm') || nameLower.includes('40cm')) {
             setMaxSelections(2);
           } else {
@@ -139,7 +139,6 @@ const ProductDetailPage = () => {
 
   const isCustomizable = product && (product.category.includes('Bolo') || product.category.includes('Tortas') || product.category === 'Doces');
   
-  // Validação
   const isFormValid = !isCustomizable || (isDoce ? selectedDoces.length > 0 : (selectedMassas.length > 0 && selectedRecheios.length > 0));
 
   const handleToggleOption = (item, currentList, setList, isPriceObj = true) => {
@@ -163,13 +162,32 @@ const ProductDetailPage = () => {
 
   const calculateTotal = () => {
     if (!product) return 0;
-    let total = product.price;
-    if (!isDoce) {
+    
+    if (isDoce) {
+      // Cálculo para Doces: Preço Base é o Cento (100un). 
+      // Se quantidade for 50, é metade do preço.
+      const pricePerUnit = product.price / 100;
+      return pricePerUnit * quantity;
+    } else {
+      // Cálculo para Bolos
+      let total = product.price;
       selectedMassas.forEach(m => total += m.price);
       selectedRecheios.forEach(r => total += r.price);
       if (selectedCobertura) total += selectedCobertura.price;
+      return total * quantity;
     }
-    return total * quantity;
+  };
+
+  const updateQuantity = (change) => {
+    if (isDoce) {
+      // Para doces, pula de 50 em 50 (Mínimo 50)
+      const newQty = quantity + (change * 50);
+      setQuantity(Math.max(50, newQty));
+    } else {
+      // Para bolos, pula de 1 em 1 (Mínimo 1)
+      const newQty = quantity + change;
+      setQuantity(Math.max(1, newQty));
+    }
   };
 
   const handleAddToCart = () => {
@@ -179,9 +197,16 @@ const ProductDetailPage = () => {
       return;
     }
 
+    const totalCalculated = calculateTotal();
+    
+    // Se for Doce, criamos um item especial no carrinho com a quantidade já no nome
+    // Ex: "Cento de Doces (50 un)"
+    // E o preço final já calculado para aquela quantidade
+    
     const itemToAdd = {
       ...product,
-      finalPrice: calculateTotal() / quantity,
+      name: isDoce ? `${product.name} (${quantity} un)` : product.name,
+      finalPrice: isDoce ? totalCalculated : (totalCalculated / quantity),
       customization: isCustomizable ? { 
         massa: isDoce ? 'N/A' : selectedMassas.map(m => m.name).join(' + '), 
         recheio: isDoce ? 'N/A' : selectedRecheios.map(r => r.name).join(' + '), 
@@ -191,8 +216,10 @@ const ProductDetailPage = () => {
       } : null
     };
 
-    addToCart(itemToAdd, quantity);
-    toast.success(`${quantity}x ${product.name} adicionado!`);
+    // Para doces, adicionamos "1 pacote" de 50/100/150 unidades
+    addToCart(itemToAdd, isDoce ? 1 : quantity);
+    
+    toast.success(isDoce ? `${quantity} doces adicionados!` : `${quantity}x ${product.name} adicionado!`);
     navigate('/catalogo');
   };
 
@@ -214,13 +241,13 @@ const ProductDetailPage = () => {
             <div className="flex-1 flex flex-col justify-center">
                 <span className="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm font-bold w-fit mb-3">{product.category}</span>
                 <h1 className="text-4xl font-serif font-bold text-[#4A3B32] mb-3">{product.name}</h1>
-                <p className="text-gray-500 mb-6">{product.description || (isDoce ? "Escolha seus sabores favoritos abaixo." : "Bolo artesanal.")}</p>
+                <p className="text-gray-500 mb-6">{product.description || (isDoce ? "Deliciosos docinhos para sua festa." : "Bolo artesanal.")}</p>
                 <div className="flex gap-4 items-end">
                   <div className="bg-pink-50 p-4 rounded-xl border border-pink-100 w-fit">
-                      <p className="text-sm text-gray-500 mb-1">Valor do Cento</p>
+                      <p className="text-sm text-gray-500 mb-1">{isDoce ? 'Valor do Cento (100un)' : 'Preço Base'}</p>
                       <p className="text-4xl font-bold text-[#D48D92]">R$ {product.price.toFixed(2)}</p>
                   </div>
-                  {isDoce && <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-green-800 font-bold text-sm h-fit mb-2">🍬 Escolha até {maxSelections} sabores para seu cento!</div>}
+                  {isDoce && <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-green-800 font-bold text-sm h-fit mb-2">🍬 Mínimo de 50 unidades</div>}
                 </div>
             </div>
         </div>
@@ -229,7 +256,7 @@ const ProductDetailPage = () => {
         {isCustomizable && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             
-            {/* SE FOR BOLO */}
+            {/* --- LÓGICA DE BOLO --- */}
             {!isDoce && (
               <>
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
@@ -280,12 +307,12 @@ const ProductDetailPage = () => {
               </>
             )}
 
-            {/* SE FOR DOCE */}
+            {/* --- LÓGICA DE DOCES --- */}
             {isDoce && (
               <section>
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
                     <span className="text-3xl">🍬</span>
-                    <div><h2 className="text-2xl font-serif font-bold text-[#4A3B32]">Escolha os Sabores</h2><p className="text-gray-500 text-sm">Selecione até <strong className="text-pink-600">{maxSelections}</strong> sabores para compor seu cento.</p></div>
+                    <div><h2 className="text-2xl font-serif font-bold text-[#4A3B32]">Escolha os Sabores</h2><p className="text-gray-500 text-sm">Selecione até <strong className="text-pink-600">{maxSelections}</strong> sabores para compor seu pedido.</p></div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {docesOptions.map((doceName) => {
@@ -314,7 +341,14 @@ const ProductDetailPage = () => {
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="hidden md:block"><p className="text-xs text-gray-500 uppercase font-bold">Total Final</p><span className="text-3xl font-bold text-[#4A3B32]">R$ {calculateTotal().toFixed(2)}</span></div>
                 <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end ml-auto">
-                    <div className="flex items-center bg-gray-100 rounded-full p-1"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 font-bold hover:bg-white rounded-full text-gray-600">-</button><span className="w-8 text-center font-bold text-lg">{quantity}</span><button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 font-bold hover:bg-white rounded-full text-gray-600">+</button></div>
+                    
+                    {/* CONTROLE DE QUANTIDADE INTELIGENTE */}
+                    <div className="flex items-center bg-gray-100 rounded-full p-1">
+                        <button onClick={() => updateQuantity(-1)} className="w-10 h-10 font-bold hover:bg-white rounded-full text-gray-600">-</button>
+                        <span className="min-w-[40px] px-2 text-center font-bold text-lg">{quantity} {isDoce && <span className="text-xs font-normal">un</span>}</span>
+                        <button onClick={() => updateQuantity(1)} className="w-10 h-10 font-bold hover:bg-white rounded-full text-gray-600">+</button>
+                    </div>
+
                     <button onClick={handleAddToCart} disabled={!isFormValid} className={`flex-1 md:flex-none px-8 py-3 rounded-full text-lg font-bold text-white shadow-lg flex items-center justify-center gap-3 ${isFormValid ? 'bg-[#4A3B32] hover:bg-[#3A2B22]' : 'bg-gray-300 cursor-not-allowed'}`}><ShoppingBag size={20} /> <span className="md:hidden">R$ {calculateTotal().toFixed(2)} • </span> <span>{isFormValid ? 'Adicionar' : 'Escolha Opções'}</span></button>
                 </div>
             </div>
