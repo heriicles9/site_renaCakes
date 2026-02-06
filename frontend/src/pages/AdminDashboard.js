@@ -185,37 +185,6 @@ const AdminDashboard = () => {
     } catch (error) { alert("Erro ao salvar produto."); }
   };
 
-  // --- FUNÇÃO MÁGICA: IMPORTAR RETANGULARES ---
-  const handleImportRectangular = async () => {
-    if (!window.confirm("Isso vai adicionar os 8 bolos retangulares da lista automaticamente. Confirma?")) return;
-    
-    const bolosParaAdicionar = [
-      { name: 'Bolo Retangular 30x20cm', price: 185.00, description: 'Serve aprox. 25 fatias. Escolha 2 massas e 2 recheios.', category: 'Bolos Retangulares' },
-      { name: 'Bolo Retangular 35x25cm', price: 245.00, description: 'Serve aprox. 30 fatias. Escolha 2 massas e 2 recheios.', category: 'Bolos Retangulares' },
-      { name: 'Bolo Retangular 40x30cm', price: 275.00, description: 'Serve aprox. 40 fatias. Escolha 2 massas e 2 recheios.', category: 'Bolos Retangulares' },
-      { name: 'Bolo Retangular 45x30cm', price: 295.00, description: 'Serve aprox. 70 fatias. Escolha 2 massas e 2 recheios.', category: 'Bolos Retangulares' },
-      { name: 'Bolo Retangular 45x35cm', price: 325.00, description: 'Serve aprox. 100 fatias. Escolha 2 massas e 2 recheios.', category: 'Bolos Retangulares' },
-      { name: 'Bolo Retangular 50x40cm', price: 365.00, description: 'Serve aprox. 130 fatias. Escolha 2 massas e 2 recheios.', category: 'Bolos Retangulares' },
-      { name: 'Bolo Retangular 45x55cm', price: 395.00, description: 'Serve aprox. 150 fatias. Escolha 2 massas e 2 recheios.', category: 'Bolos Retangulares' },
-      { name: 'Bolo Retangular 75x45cm', price: 425.00, description: 'Serve aprox. 200 fatias. Escolha 2 massas e 2 recheios.', category: 'Bolos Retangulares' },
-    ];
-
-    try {
-      setLoading(true);
-      // Envia um por um
-      for (const bolo of bolosParaAdicionar) {
-         await axios.post(`${API}/products`, bolo, getHeaders());
-      }
-      alert("✅ Todos os 8 bolos foram adicionados com sucesso!");
-      loadData();
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao importar. Verifique se você está logado.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // --- ACTIONS CONFIGURAÇÕES ---
   const handleSaveSettings = async (e) => {
     e.preventDefault();
@@ -301,18 +270,9 @@ const AdminDashboard = () => {
         {/* --- PRODUTOS --- */}
         {view === 'products' && (
           <div>
-            <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+            <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Cardápio Atual</h2>
-              <div className="flex gap-2">
-                {/* BOTÃO MÁGICO DE IMPORTAÇÃO */}
-                <button 
-                  onClick={handleImportRectangular} 
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-purple-700 shadow-md transition-all text-sm flex items-center gap-2"
-                >
-                  ⚡ Importar Retangulares
-                </button>
-                <button onClick={handleNewClick} className="bg-green-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-green-700 shadow-md text-sm">+ Novo Produto</button>
-              </div>
+              <button onClick={handleNewClick} className="bg-green-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-green-700 shadow-md text-sm">+ Novo Produto</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {products.map(prod => (
@@ -321,7 +281,7 @@ const AdminDashboard = () => {
                   <div className="p-4 flex-1">
                     <div className="flex justify-between font-bold mb-2"><h3>{prod.name}</h3><span className="text-pink-600">R$ {prod.price.toFixed(2)}</span></div>
                     <p className="text-sm text-gray-500">{prod.category}</p>
-                    <p className="text-xs text-gray-400 mt-2">{prod.description}</p>
+                    <p className="text-xs text-gray-400 mt-2 line-clamp-2">{prod.description}</p>
                   </div>
                   <div className="p-3 border-t bg-gray-50 flex justify-end gap-2">
                     <button onClick={() => handleEditClick(prod)} className="text-blue-600 font-bold text-sm px-3">Editar</button>
