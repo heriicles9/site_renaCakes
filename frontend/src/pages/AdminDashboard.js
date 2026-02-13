@@ -301,11 +301,17 @@ const AdminDashboard = () => {
               <input type="text" placeholder="Nome" required className="w-full p-3 border rounded" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
               <div className="grid grid-cols-2 gap-4">
                 <input type="number" step="0.01" placeholder="Preço" required className="w-full p-3 border rounded" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+                
+                {/* --- AQUI ESTÁ A LISTA DE CATEGORIAS --- */}
                 <select className="w-full p-3 border rounded" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                  <option>Bolos Redondos</option><option>Bolos Retangulares</option><option>Doces</option><option>Kits</option>
+                  <option>Bolos Redondos</option>
+                  <option>Bolos Retangulares</option>
+                  <option>Bolos em Movimento</option> {/* <--- Essa é a opção nova */}
+                  <option>Doces</option>
+                  <option>Kits</option>
                 </select>
               </div>
-              <input type="text" placeholder="URL da Imagem" className="w-full p-3 border rounded" value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} />
+              <input type="text" placeholder="URL da Imagem (Use .mp4 para vídeo!)" className="w-full p-3 border rounded" value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} />
               <textarea placeholder="Descrição" className="w-full p-3 border rounded h-24" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => setView('products')} className="px-6 py-2 border rounded">Cancelar</button>
