@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Star, Heart } from 'lucide-react';
+import { ShoppingBag, Star, Heart, PlayCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
@@ -13,19 +13,28 @@ const API = `${BACKEND_URL}/api`;
 
 const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [videoProducts, setVideoProducts] = useState([]);
   const { addToCart } = useCart();
 
   useEffect(() => {
-    fetchFeaturedProducts();
+    fetchProducts();
   }, []);
 
-  const fetchFeaturedProducts = async () => {
+  const fetchProducts = async () => {
     try {
       const response = await axios.get(`${API}/products`);
-      const featured = response.data.filter((p) => p.featured).slice(0, 3);
+      const allProducts = response.data;
+
+      // 1. Filtra produtos marcados como destaque (mantendo sua lógica original)
+      const featured = allProducts.filter((p) => p.featured).slice(0, 3);
       setFeaturedProducts(featured);
+
+      // 2. Filtra produtos da categoria "Bolos em Movimento"
+      const videos = allProducts.filter(p => p.category === 'Bolos em Movimento');
+      setVideoProducts(videos);
+
     } catch (error) {
-      console.error('Erro ao carregar produtos em destaque:', error);
+      console.error('Erro ao carregar produtos:', error);
     }
   };
 
@@ -34,10 +43,14 @@ const HomePage = () => {
     toast.success(`${product.name} adicionado ao carrinho!`);
   };
 
+  // Função para verificar se é vídeo
+  const isVideo = (url) => url && (url.includes('.mp4') || url.includes('.webm'));
+
   return (
     <div className="min-h-screen">
       <Navbar />
 
+      {/* --- HERO SECTION (Original) --- */}
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -80,7 +93,64 @@ const HomePage = () => {
         </div>
       </motion.section>
 
-      <section className="py-20 px-6">
+      {/* --- SEÇÃO NOVA: BOLOS EM MOVIMENTO --- */}
+      {videoProducts.length > 0 && (
+        <section className="py-20 px-6 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-12">
+              <span className="text-brand-rose font-bold uppercase tracking-widest text-sm">Experiência Visual</span>
+              <h2 className="font-heading text-4xl md:text-5xl font-bold text-brand-brown mt-2 mb-4">
+                ✨ Bolos em Movimento
+              </h2>
+              <p className="text-lg text-brand-brown/70 max-w-2xl mx-auto">
+                Veja a mágica e os detalhes dos nossos bolos especiais em ação.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {videoProducts.map((product, index) => (
+                <Link to={`/produto/${product.id}`} key={product.id}>
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="group relative rounded-3xl overflow-hidden shadow-xl h-[450px] border border-brand-pink/20"
+                  >
+                    <div className="absolute inset-0 bg-black">
+                      {isVideo(product.image_url) ? (
+                        <video 
+                          src={product.image_url} 
+                          autoPlay muted loop playsInline 
+                          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-700" 
+                        />
+                      ) : (
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    
+                    {/* Gradiente e Informações sobre o vídeo */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-8">
+                      <div className="bg-white/20 backdrop-blur-md w-fit px-3 py-1 rounded-full text-white text-xs font-bold mb-3 flex items-center gap-1 border border-white/30">
+                        <PlayCircle size={14} /> Assista Agora
+                      </div>
+                      <h3 className="font-heading text-3xl font-bold text-white mb-2">{product.name}</h3>
+                      <div className="flex justify-between items-end">
+                        <p className="text-gray-200 line-clamp-2 text-sm max-w-[70%] font-light">{product.description}</p>
+                        <span className="text-brand-rose font-bold text-xl bg-white/10 backdrop-blur-md px-4 py-1 rounded-lg border border-white/10">
+                          R$ {product.price.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* --- DESTAQUES (Original) --- */}
+      <section className="py-20 px-6 bg-brand-cream/20">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -109,11 +179,15 @@ const HomePage = () => {
                 data-testid={`featured-product-${index}`}
               >
                 <div className="aspect-square overflow-hidden">
-                  <img
-                    src={product.image_url || 'https://images.unsplash.com/photo-1621868402792-a5c9fa6866a3?crop=entropy&cs=srgb&fm=jpg&q=85'}
-                    alt={product.name}
-                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                  />
+                  {product.image_url ? (
+                     isVideo(product.image_url) ? (
+                        <video src={product.image_url} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                     ) : (
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                     )
+                  ) : (
+                     <img src="https://images.unsplash.com/photo-1621868402792-a5c9fa6866a3?crop=entropy&cs=srgb&fm=jpg&q=85" alt="Sem imagem" className="w-full h-full object-cover" />
+                  )}
                 </div>
                 <div className="p-6">
                   <h3 className="font-heading text-2xl font-bold text-brand-brown mb-2">
@@ -126,11 +200,10 @@ const HomePage = () => {
                     <span className="font-bold text-2xl text-brand-rose">
                       R$ {product.price.toFixed(2)}
                     </span>
-                    {product.category === 'Bolos Redondos' || product.category === 'Bolos Retangulares' ? (
+                    {(product.category && (product.category.includes('Bolo') || product.category === 'Doces')) ? (
                       <Link
                         to={`/produto/${product.id}`}
                         className="bg-brand-brown text-white px-6 py-2.5 rounded-full hover:bg-brand-brown/90 transition-all transform active:scale-95 flex items-center gap-2"
-                        data-testid={`add-to-cart-${index}`}
                       >
                         <ShoppingBag size={18} />
                         Personalizar
@@ -139,7 +212,6 @@ const HomePage = () => {
                       <button
                         onClick={() => handleAddToCart(product)}
                         className="bg-brand-brown text-white px-6 py-2.5 rounded-full hover:bg-brand-brown/90 transition-all transform active:scale-95 flex items-center gap-2"
-                        data-testid={`add-to-cart-${index}`}
                       >
                         <ShoppingBag size={18} />
                         Adicionar
@@ -163,6 +235,7 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* --- BENEFÍCIOS (Original) --- */}
       <section className="py-20 px-6 bg-brand-pink/30">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
