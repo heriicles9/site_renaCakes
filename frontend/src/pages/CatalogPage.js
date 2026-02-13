@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Filter } from 'lucide-react';
+import { ShoppingBag, Filter, PlayCircle } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -15,10 +15,11 @@ const CatalogPage = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [loading, setLoading] = useState(true); // Estado de carregamento
+  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
 
-  const categories = ['Todos', 'Bolos Redondos', 'Bolos Retangulares', 'Doces', 'Kits'];
+  // Adicione "Bolos em Movimento" nas categorias se quiser filtrar por eles
+  const categories = ['Todos', 'Bolos Redondos', 'Bolos Retangulares', 'Bolos em Movimento', 'Doces', 'Kits'];
 
   useEffect(() => {
     fetchProducts();
@@ -52,20 +53,24 @@ const CatalogPage = () => {
   };
 
   const isCustomizable = (category) => {
-    return category && (category.includes('Bolo') || category.includes('Tortas'));
+    return category && (category.includes('Bolo') || category.includes('Tortas') || category === 'Doces');
   };
 
-  // --- COMPONENTE DE SKELETON (LOADING) ---
+  // Função para verificar se é vídeo
+  const isVideo = (url) => {
+    return url && (url.includes('.mp4') || url.includes('.webm'));
+  };
+
+  // Skeleton Loading
   const ProductSkeleton = () => (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col h-[400px]">
-      <div className="h-64 bg-gray-200 animate-pulse" /> {/* Foto */}
+      <div className="h-64 bg-gray-200 animate-pulse" />
       <div className="p-6 flex-1 flex flex-col space-y-4">
-        <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse" /> {/* Título */}
-        <div className="h-4 bg-gray-200 rounded w-full animate-pulse" /> {/* Descrição */}
-        <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" /> {/* Descrição 2 */}
+        <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse" />
+        <div className="h-4 bg-gray-200 rounded w-full animate-pulse" />
         <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">
-          <div className="h-8 bg-gray-200 rounded w-20 animate-pulse" /> {/* Preço */}
-          <div className="h-10 bg-gray-200 rounded w-28 animate-pulse" /> {/* Botão */}
+          <div className="h-8 bg-gray-200 rounded w-20 animate-pulse" />
+          <div className="h-10 bg-gray-200 rounded w-28 animate-pulse" />
         </div>
       </div>
     </div>
@@ -112,7 +117,6 @@ const CatalogPage = () => {
         {/* GRADE DE PRODUTOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {loading ? (
-            // Mostra 6 esqueletos enquanto carrega
             <>
               <ProductSkeleton /><ProductSkeleton /><ProductSkeleton />
               <ProductSkeleton /><ProductSkeleton /><ProductSkeleton />
@@ -126,13 +130,26 @@ const CatalogPage = () => {
                 transition={{ delay: index * 0.05 }}
                 className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 flex flex-col group"
               >
-                <Link to={`/produto/${product.id}`} className="block h-64 overflow-hidden relative">
+                <Link to={`/produto/${product.id}`} className="block h-64 overflow-hidden relative bg-gray-100">
                   {product.image_url ? (
-                     <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                     isVideo(product.image_url) ? (
+                        <video 
+                          src={product.image_url} 
+                          autoPlay muted loop playsInline 
+                          className="w-full h-full object-cover"
+                        />
+                     ) : (
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                     )
                   ) : (
                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sem Imagem</div>
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
+                  {/* Ícone indicando vídeo se for vídeo */}
+                  {isVideo(product.image_url) && (
+                    <div className="absolute top-2 right-2 bg-white/80 p-1 rounded-full text-[#4A3B32] shadow-sm">
+                      <PlayCircle size={20} />
+                    </div>
+                  )}
                 </Link>
                 
                 <div className="p-6 flex-1 flex flex-col">
