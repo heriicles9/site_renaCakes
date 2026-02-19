@@ -14,18 +14,24 @@ const API = `${BACKEND_URL}/api`;
 const CatalogPage = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
 
-  // Adicione "Bolos em Movimento" nas categorias se quiser filtrar por eles
+  // --- MEMÓRIA DE FILTRO: Lê o último salvo ou começa em 'Todos' ---
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    return sessionStorage.getItem('catalogFilter') || 'Todos';
+  });
+
   const categories = ['Todos', 'Bolos Redondos', 'Bolos Retangulares', 'Bolos em Movimento', 'Doces', 'Kits'];
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
+  // --- SALVA O FILTRO SEMPRE QUE MUDAR ---
   useEffect(() => {
+    sessionStorage.setItem('catalogFilter', selectedCategory);
+    
     let result = products;
     if (selectedCategory !== 'Todos') {
       result = products.filter((p) => p.category === selectedCategory);
@@ -56,12 +62,10 @@ const CatalogPage = () => {
     return category && (category.includes('Bolo') || category.includes('Tortas') || category === 'Doces');
   };
 
-  // Função para verificar se é vídeo
   const isVideo = (url) => {
     return url && (url.includes('.mp4') || url.includes('.webm'));
   };
 
-  // Skeleton Loading
   const ProductSkeleton = () => (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col h-[400px]">
       <div className="h-64 bg-gray-200 animate-pulse" />
@@ -144,7 +148,6 @@ const CatalogPage = () => {
                   ) : (
                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">Sem Imagem</div>
                   )}
-                  {/* Ícone indicando vídeo se for vídeo */}
                   {isVideo(product.image_url) && (
                     <div className="absolute top-2 right-2 bg-white/80 p-1 rounded-full text-[#4A3B32] shadow-sm">
                       <PlayCircle size={20} />
