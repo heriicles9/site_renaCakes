@@ -21,17 +21,20 @@ const ProductDetailPage = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [quantity, setQuantity] = useState(1);
 
-  // --- LISTAS E CONFIGS (Mantive suas listas originais aqui) ---
+  // --- FORÇA A PÁGINA A SUBIR PARA O TOPO SEMPRE QUE ABRIR ---
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  // --- LISTAS E CONFIGS ---
   const defaultMassas = [{ name: 'Tradicional', price: 0 }, { name: 'Baunilha', price: 0 }, { name: 'Chocolate', price: 0 }, { name: 'Coco', price: 0 }, { name: 'Amendoim', price: 22 }, { name: 'Red Velvet', price: 32 }, { name: 'Nozes', price: 38 }, { name: 'Black', price: 42 }];
   const defaultRecheios = [{ name: 'Chocolate Belga', price: 0 }, { name: 'Quatro Leites', price: 0 }, { name: 'Brigadeiro Branco', price: 0 }, { name: 'Beijinho', price: 0 }, { name: 'Limão Siciliano', price: 0 }, { name: 'Mousse de Maracujá', price: 0 }, { name: 'Ameixa', price: 0 }, { name: 'Pistache', price: 0 }, { name: 'Doce de Leite', price: 0 }, { name: 'Abacaxi c/ Coco', price: 22 }, { name: 'Mousse Flocado', price: 28 }, { name: 'Amêndoas', price: 32 }, { name: 'Bombom', price: 32 }, { name: 'Geleia Frutas Amarelas', price: 38 }, { name: 'Cereja', price: 38 }, { name: 'Nozes', price: 38 }, { name: 'Damasco', price: 38 }, { name: 'Geleia Frutas Vermelhas', price: 42 }, { name: 'Geleia Morango Fresco', price: 42 }, { name: 'Nutella', price: 42 }];
   const coberturasOptions = [{ name: 'Chantilly', price: 0 }, { name: 'Ganache', price: 0 }, { name: 'Buttercream', price: 0 }, { name: 'Glacê', price: 0 }, { name: 'Pasta Americana', price: 0 }];
 
-  // Doces
   const docesComuns = ['Brigadeiro Preto', 'Beijinho', 'Cajuzinho', 'Limãozinho', 'Brigadeiro Branco', 'Brigadeiro com Flocos', 'Ninho com Amendoim', 'Casadinho de Ninho'];
   const docesFinos = ['Morango Coberto', 'Coco com Ameixa', 'Coco com Damasco', 'Coco com Cereja'];
   const docesGourmet = ['Brigadeiro Gourmet', 'Brigadeiro de Ninho', 'Brigadeiro de Limão', 'Brigadeiro de Maracujá', 'Brigadeiro Capim Santo', 'Bombom de Uva', 'Bombom de Banana', 'Bombom de Goiaba', 'Tortinha Cream Cheese', 'Tortinha Limão', 'Tortinha Morango', 'Tortinha Maracujá c/ Coco', 'Tortinha Physalis'];
 
-  // Estados
   const [massasOptions, setMassasOptions] = useState([]);
   const [recheiosOptions, setRecheiosOptions] = useState([]);
   const [selectedMassas, setSelectedMassas] = useState([]);
@@ -72,15 +75,18 @@ const ProductDetailPage = () => {
           if (settingsRes.data.recheios_options?.length > 0) setRecheiosOptions(settingsRes.data.recheios_options);
           else setRecheiosOptions(defaultRecheios);
           
+          const nameCheck = nameLower.replace(/\s+/g, ''); 
+          const catCheck = category.toLowerCase();
+
           if (
-            nameLower.includes('20cm') || nameLower.includes('25cm') || nameLower.includes('30cm') || 
-            nameLower.includes('35cm') || nameLower.includes('40cm') || nameLower.includes('45cm') ||
-            nameLower.includes('50cm') || nameLower.includes('55cm') || nameLower.includes('75cm') ||
-            nameLower.includes('retangular')
+            nameCheck.includes('20cm') || nameCheck.includes('25cm') || nameCheck.includes('30cm') || 
+            nameCheck.includes('35cm') || nameCheck.includes('40cm') || nameCheck.includes('45cm') ||
+            nameCheck.includes('50cm') || nameCheck.includes('55cm') || nameCheck.includes('75cm') ||
+            nameCheck.includes('retangular') || catCheck.includes('retangular')
           ) {
-            setMaxSelections(2);
+            setMaxSelections(2); 
           } else {
-            setMaxSelections(1);
+            setMaxSelections(1); 
           }
         }
       } catch (err) {
@@ -116,7 +122,7 @@ const ProductDetailPage = () => {
       if (maxSelections === 1 && !isDoce) setList([item]); 
       else {
         if (currentList.length < maxSelections) setList([...currentList, item]);
-        else toast.warning(`Limite de ${maxSelections} opções.`);
+        else toast.warning(`O limite para este produto é de ${maxSelections} opções.`);
       }
     }
   };
@@ -168,7 +174,6 @@ const ProductDetailPage = () => {
     navigate('/catalogo');
   };
 
-  // VERIFICADOR DE VÍDEO
   const isVideo = (url) => url && (url.includes('.mp4') || url.includes('.webm'));
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#FFFDF9] font-bold text-pink-900">Carregando...</div>;
@@ -203,21 +208,41 @@ const ProductDetailPage = () => {
             </div>
         </div>
 
-        {/* --- PERSONALIZAÇÃO (Mantido igual) --- */}
         {isCustomizable && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             {!isDoce && (
               <>
-                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200"><span className="text-3xl">🎂</span><div><h2 className="text-2xl font-serif font-bold text-[#4A3B32]">Monte Seu Bolo</h2><p className="text-gray-500 text-sm">Escolha <strong className="text-pink-600">{selectedMassas.length}/{maxSelections}</strong> massas e <strong className="text-pink-600">{selectedRecheios.length}/{maxSelections}</strong> recheios.</p></div></div>
-                <section><h3 className="text-lg font-bold text-[#4A3B32] mb-4">1. Escolha a Massa</h3><div className="grid grid-cols-2 md:grid-cols-4 gap-3">{massasOptions.map((m) => { const isSelected = selectedMassas.find(i => i.name === m.name); return (<button key={m.name} onClick={() => handleToggleOption(m, selectedMassas, setSelectedMassas)} className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[90px] ${isSelected ? 'border-[#4A3B32] bg-[#4A3B32] text-white shadow-lg scale-95' : 'border-gray-100 bg-white text-gray-700 hover:border-pink-200 hover:bg-pink-50'}`}>{isSelected && <div className="absolute top-2 right-2"><CheckCircle size={16} /></div>}<span className="font-bold text-center">{m.name}</span>{m.price > 0 && <span className="text-xs mt-1 px-2 bg-pink-100 text-pink-700 rounded-full">+ R$ {m.price}</span>}</button>); })}</div></section>
-                <section><h3 className="text-lg font-bold text-[#4A3B32] mb-4">2. Escolha o Recheio</h3><div className="grid grid-cols-2 md:grid-cols-4 gap-3">{recheiosOptions.map((r) => { const isSelected = selectedRecheios.find(i => i.name === r.name); return (<button key={r.name} onClick={() => handleToggleOption(r, selectedRecheios, setSelectedRecheios)} className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[90px] ${isSelected ? 'border-[#D48D92] bg-[#D48D92] text-white shadow-lg scale-95' : 'border-gray-100 bg-white text-gray-700 hover:border-pink-200 hover:bg-pink-50'}`}>{isSelected && <div className="absolute top-2 right-2"><CheckCircle size={16} /></div>}<span className="font-bold text-center">{r.name}</span>{r.price > 0 && <span className="text-xs mt-1 px-2 bg-pink-100 text-pink-700 rounded-full">+ R$ {r.price}</span>}</button>); })}</div></section>
-                <section><h3 className="text-lg font-bold text-[#4A3B32] mb-4">3. Cobertura</h3><div className="grid grid-cols-2 md:grid-cols-5 gap-3">{coberturasOptions.map((c) => (<button key={c.name} onClick={() => setSelectedCobertura(c)} className={`p-3 rounded-xl border transition-all ${selectedCobertura?.name === c.name ? 'bg-[#4A3B32] text-white font-bold shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>{c.name}</button>))}</div></section>
+                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+                  <span className="text-3xl">🎂</span>
+                  <div>
+                    <h2 className="text-2xl font-serif font-bold text-[#4A3B32]">Monte Seu Bolo</h2>
+                    <p className="text-gray-500 text-sm">
+                      Escolha <strong className="text-pink-600">{selectedMassas.length}/{maxSelections}</strong> massas e <strong className="text-pink-600">{selectedRecheios.length}/{maxSelections}</strong> recheios.
+                    </p>
+                  </div>
+                </div>
+
+                <section>
+                  <h3 className="text-lg font-bold text-[#4A3B32] mb-4">1. Escolha a Massa {maxSelections > 1 ? '(Até 2)' : '(Apenas 1)'}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{massasOptions.map((m) => { const isSelected = selectedMassas.find(i => i.name === m.name); return (<button key={m.name} onClick={() => handleToggleOption(m, selectedMassas, setSelectedMassas)} className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[90px] ${isSelected ? 'border-[#4A3B32] bg-[#4A3B32] text-white shadow-lg scale-95' : 'border-gray-100 bg-white text-gray-700 hover:border-pink-200 hover:bg-pink-50'}`}>{isSelected && <div className="absolute top-2 right-2"><CheckCircle size={16} /></div>}<span className="font-bold text-center">{m.name}</span>{m.price > 0 && <span className="text-xs mt-1 px-2 bg-pink-100 text-pink-700 rounded-full">+ R$ {m.price}</span>}</button>); })}</div>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-bold text-[#4A3B32] mb-4">2. Escolha o Recheio {maxSelections > 1 ? '(Até 2)' : '(Apenas 1)'}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{recheiosOptions.map((r) => { const isSelected = selectedRecheios.find(i => i.name === r.name); return (<button key={r.name} onClick={() => handleToggleOption(r, selectedRecheios, setSelectedRecheios)} className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[90px] ${isSelected ? 'border-[#D48D92] bg-[#D48D92] text-white shadow-lg scale-95' : 'border-gray-100 bg-white text-gray-700 hover:border-pink-200 hover:bg-pink-50'}`}>{isSelected && <div className="absolute top-2 right-2"><CheckCircle size={16} /></div>}<span className="font-bold text-center">{r.name}</span>{r.price > 0 && <span className="text-xs mt-1 px-2 bg-pink-100 text-pink-700 rounded-full">+ R$ {r.price}</span>}</button>); })}</div>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-bold text-[#4A3B32] mb-4">3. Cobertura</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">{coberturasOptions.map((c) => (<button key={c.name} onClick={() => setSelectedCobertura(c)} className={`p-3 rounded-xl border transition-all ${selectedCobertura?.name === c.name ? 'bg-[#4A3B32] text-white font-bold shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>{c.name}</button>))}</div>
+                </section>
               </>
             )}
+            
             {isDoce && (
               <section><div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200"><span className="text-3xl">🍬</span><div><h2 className="text-2xl font-serif font-bold text-[#4A3B32]">Escolha os Sabores</h2></div></div><div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">{docesOptions.map((doceName) => { const isSelected = selectedDoces.includes(doceName); return (<button key={doceName} onClick={() => handleToggleOption(doceName, selectedDoces, setSelectedDoces, false)} className={`relative p-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center min-h-[80px] ${isSelected ? 'border-[#D48D92] bg-[#D48D92] text-white shadow-lg scale-95' : 'border-gray-100 bg-white text-gray-700 hover:border-pink-200 hover:bg-pink-50'}`}>{isSelected && <div className="absolute top-2 right-2"><CheckCircle size={16} /></div>}<span className="font-bold text-center text-sm">{doceName}</span></button>); })}</div></section>
             )}
-            <section className="bg-yellow-50 border border-yellow-200 p-6 rounded-2xl"><h3 className="text-lg font-bold text-yellow-800 mb-2 flex items-center gap-2"><Info size={20}/> Observações</h3><textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} placeholder="Observações..." className="w-full p-4 border border-gray-200 rounded-xl h-24 bg-white focus:outline-pink-300" /></section>
+            <section className="bg-yellow-50 border border-yellow-200 p-6 rounded-2xl"><h3 className="text-lg font-bold text-yellow-800 mb-2 flex items-center gap-2"><Info size={20}/> Observações</h3><textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} placeholder="Ex: Metade de cada sabor, sem morango em cima..." className="w-full p-4 border border-gray-200 rounded-xl h-24 bg-white focus:outline-pink-300" /></section>
           </motion.div>
         )}
 
