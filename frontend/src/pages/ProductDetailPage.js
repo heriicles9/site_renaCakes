@@ -75,18 +75,21 @@ const ProductDetailPage = () => {
           if (settingsRes.data.recheios_options?.length > 0) setRecheiosOptions(settingsRes.data.recheios_options);
           else setRecheiosOptions(defaultRecheios);
           
+          // --- REGRA DE 2 SABORES ATUALIZADA ---
           const nameCheck = nameLower.replace(/\s+/g, ''); 
           const catCheck = category.toLowerCase();
 
+          // Adicionei '22cm' e '28cm' na lista abaixo 👇
           if (
-            nameCheck.includes('20cm') || nameCheck.includes('25cm') || nameCheck.includes('30cm') || 
-            nameCheck.includes('35cm') || nameCheck.includes('40cm') || nameCheck.includes('45cm') ||
-            nameCheck.includes('50cm') || nameCheck.includes('55cm') || nameCheck.includes('75cm') ||
+            nameCheck.includes('20cm') || nameCheck.includes('22cm') || nameCheck.includes('25cm') || 
+            nameCheck.includes('28cm') || nameCheck.includes('30cm') || nameCheck.includes('35cm') || 
+            nameCheck.includes('40cm') || nameCheck.includes('45cm') || nameCheck.includes('50cm') || 
+            nameCheck.includes('55cm') || nameCheck.includes('75cm') ||
             nameCheck.includes('retangular') || catCheck.includes('retangular')
           ) {
-            setMaxSelections(2); 
+            setMaxSelections(2); // Grande (2 sabores)
           } else {
-            setMaxSelections(1); 
+            setMaxSelections(1); // Pequeno (1 sabor)
           }
         }
       } catch (err) {
